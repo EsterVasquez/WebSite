@@ -7,7 +7,7 @@ from django.http import HttpResponse
 
 load_dotenv()
 
-WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN")
+WHATSAPP_TOKEN = os.environ.get("W_TOKEN")
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
 
 @csrf_exempt
