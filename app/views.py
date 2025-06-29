@@ -10,6 +10,7 @@ load_dotenv()
 WHATSAPP_TOKEN = os.environ.get("W_TOKEN")
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
 
+
 @csrf_exempt
 def webhook(request):
     if request.method == "POST":
@@ -38,8 +39,31 @@ def webhook(request):
                 payload = {
                     "messaging_product": "whatsapp",
                     "to": sender,
-                    "type": "text",
-                    "text": {"body": "hola"}
+                    "type": "interactive",
+                    "interactive": {
+                        "type": "button",
+                        "body": {
+                            "text": "¿Qué deseas hacer?"
+                        },
+                        "action": {
+                            "buttons": [
+                                {
+                                    "type": "reply",
+                                    "reply": {
+                                        "id": "Opcion 1",
+                                        "title": "Opción 1"
+                                    }
+                                },
+                                {
+                                    "type": "reply",
+                                    "reply": {
+                                        "id": "Opcion 2",
+                                        "title": "Opción 2"
+                                    }
+                                }
+                            ]
+                        }
+                    }
                 }
                 response = requests.post(url, headers=headers, json=payload)
                 print(
