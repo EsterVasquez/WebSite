@@ -11,8 +11,38 @@ WHATSAPP_TOKEN = os.environ.get("W_TOKEN")
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
 
 
+def handle_opcion_1(sender):
+    return {
+        "messaging_product": "whatsapp",
+        "to": sender,
+        "type": "text",
+        "text": {"body": "Elegiste Opción 1"}
+    }
+
+
+def handle_opcion_2(sender):
+    return {
+        "messaging_product": "whatsapp",
+        "to": sender,
+        "type": "text",
+        "text": {"body": "Elegiste Opción 2"}
+    }
+
+
+COMMAND_HANDLERS = {
+    "Opcion 1": handle_opcion_1,
+    "Opcion 2": handle_opcion_2,
+}
+
+
 @csrf_exempt
 def webhook(request):
+    URL = f"https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/messages"
+    HEADERS = {
+        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
     if request.method == "POST":
         try:
             data = json.loads(request.body)
@@ -30,42 +60,18 @@ def webhook(request):
                 text = message["text"]["body"]
                 print(f"Mensaje de {sender}: {text}")
 
-                # Enviar respuesta "hola"
-                url = f"https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/messages"
-                headers = {
-                    "Authorization": f"Bearer {WHATSAPP_TOKEN}",
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "messaging_product": "whatsapp",
-                    "to": sender,
-                    "type": "interactive",
-                    "interactive": {
-                        "type": "button",
-                        "body": {
-                            "text": "¿Qué deseas hacer?"
-                        },
-                        "action": {
-                            "buttons": [
-                                {
-                                    "type": "reply",
-                                    "reply": {
-                                        "id": "Opcion 1",
-                                        "title": "Opción 1"
-                                    }
-                                },
-                                {
-                                    "type": "reply",
-                                    "reply": {
-                                        "id": "Opcion 2",
-                                        "title": "Opción 2"
-                                    }
-                                }
-                            ]
-                        }
+                handler = COMMAND_HANDLERS.get(text)
+                if handler:
+                    payload = handler(sender)
+                else:
+                    payload = {
+                        "messaging_product": "whatsapp",
+                        "to": sender,
+                        "type": "text",
+                        "text": {"body": "No entiendo tu mensaje."}
                     }
-                }
-                response = requests.post(url, headers=headers, json=payload)
+
+                response = requests.post(URL, headers=HEADERS, json=payload)
                 print(
                     f"Respuesta enviada: {response.status_code} - {response.text}")
 
