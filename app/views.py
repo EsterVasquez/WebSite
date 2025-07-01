@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.shortcuts import render
 
 load_dotenv()
 
@@ -81,3 +82,7 @@ def webhook(request):
         return HttpResponse("EVENT_RECEIVED", status=200)
     else:
         return HttpResponse("Método no permitido", status=405)
+
+
+def calendar(request):
+    return render(request, "calendar.html")
