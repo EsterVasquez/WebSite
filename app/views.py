@@ -10,39 +10,110 @@ load_dotenv()
 
 WHATSAPP_TOKEN = os.environ.get("W_TOKEN")
 PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
-
+URL = f"https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/messages"
+HEADERS = {
+        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+        "Content-Type": "application/json"
+    }
 
 def handle_opcion_1(sender):
-    return {
+
+    return [{
         "messaging_product": "whatsapp",
         "to": sender,
         "type": "text",
-        "text": {"body": "Elegiste Opción 1"}
-    }
-
-
-def handle_opcion_2(sender):
-    return {
+        "text": {"body": "Hola!!! \nGracias por comunicarte a Jonathan CA Photography. \nSoy el asistente virtual y te ayudaré con todo lo que necesites."}
+    },
+        {
         "messaging_product": "whatsapp",
+        "recipient_type": "individual",
         "to": sender,
-        "type": "text",
-        "text": {"body": "Elegiste Opción 2"}
+        "type": "interactive",
+
+        "interactive": {
+            "type": "list",
+            "header": {
+                "type": "text",
+                "text": "¿¿Porque te comunicas con nosotros??"
+            },
+            "body": {
+                "text": "Selecciona lo que deseas hacer 👇 para brindarte la mejor atención."
+            },
+            "action": {
+                "button": "Opciones",
+                "sections": [
+                    {
+                        "title": "Agendar",
+                        "rows": [
+                            {
+                                "id": "Agendar",
+                                "title": "Agendar",
+                                "description": "Agendar: Sesión o Evento ",
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Cotizar",
+                        "rows": [
+                            {
+                                "id": "Cotizar",
+                                "title": "Cotización",
+                                "description": "Quiero conocer los precios",
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Entrega",
+                        "rows": [
+                            {
+                                "id": "Entrega",
+                                "title": "Entrega",
+                                "description": "Quiero conocer el tiempo de entrega de mi material",
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Dudas",
+                        "rows": [
+                            {
+                                "id": "Dudas",
+                                "title": "Dudas/Otro",
+                                "description": "Tengo dudas, o las otras opciones no son lo que busco",
+                            }
+                        ]
+                    },
+                ]
+            }
+        }
     }
+    ]
+
+
+# def handle_opcion_2(sender):
+#     return {
+#         "messaging_product": "whatsapp",
+#         "to": sender,
+#         "type": "text",
+#         "text": {"body": "Hola!!! \nGracias por comunicarte con Jonathan CA Photogrphy. \nSoy el asistente virtual que estara resolviendo tus dudas"}
+#     }
 
 
 COMMAND_HANDLERS = {
-    "Opcion 1": handle_opcion_1,
-    "Opcion 2": handle_opcion_2,
+    "Hola": handle_opcion_1,
 }
+
+def send_messages(payloads):
+    """Envía cada payload y maneja errores/respaldos de forma centralizada."""
+    for payload in payloads:
+        resp = requests.post(URL, headers=HEADERS, json=payload)
+        if not resp.ok:
+            # podría reintentar, loggear en un sistema de alertas, etc.
+            print(f"Error al enviar: {resp.status_code} – {resp.text}")
 
 
 @csrf_exempt
 def webhook(request):
-    URL = f"https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/messages"
-    HEADERS = {
-        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
-        "Content-Type": "application/json"
-    }
+
 
     if request.method == "POST":
         try:
@@ -63,16 +134,17 @@ def webhook(request):
 
                 handler = COMMAND_HANDLERS.get(text)
                 if handler:
-                    payload = handler(sender)
+                    payloads = handler(sender)
                 else:
-                    payload = {
+                    payloads = {
                         "messaging_product": "whatsapp",
                         "to": sender,
                         "type": "text",
                         "text": {"body": "No entiendo tu mensaje."}
                     }
 
-                response = requests.post(URL, headers=HEADERS, json=payload)
+                send_messages(payloads)
+                response = requests.post(URL, headers=HEADERS, json=payloads)
                 print(
                     f"Respuesta enviada: {response.status_code} - {response.text}")
 
