@@ -19,7 +19,8 @@ from django.urls import path
 from app.views import *
 
 urlpatterns = [
+    path('', calendar, name='calendar'),
     path('admin/', admin.site.urls),
     path('webhook/', webhook, name='webhook'),
-    path('calendar/', calendar, name='calendar'),
+
 ]
