@@ -78,7 +78,7 @@
             <div id="calendarSection" class="tab-content">
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     <!-- Sidebar -->
-                    <div class="lg:col-span-1 space-y-4">
+                    <div class="col-span-1 w-full space-y-4">
                         <!-- Filtros -->
                         <div
                             class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
@@ -135,10 +135,15 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Mobile Day Summary -->
+                        <div id="mobileDaySummary" class="hidden mt-4 bg-white dark:bg-gray-800 rounded-lg p-4 shadow 
+            border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                        </div>
+
                     </div>
 
                     <!-- Main Calendar -->
-                    <div class="lg:col-span-3">
+                    <div class="hidden lg:block lg:col-span-3">
                         <div
                             class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
                             <div class="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -701,8 +706,54 @@
         }
 
         function selectDate(element) {
-            currentDate = new Date(element.dataset.date);
-            updateCalendar();
+            const selectedDate = new Date(element.dataset.date);
+            currentDate = selectedDate;
+
+            if (window.innerWidth <= 768) {
+                showMobileDaySummary(selectedDate);
+            } else {
+                updateCalendar();
+            }
+        }
+
+        function showMobileDaySummary(date) {
+            const dayAppointments = appointments.filter(apt =>
+                apt.date.toDateString() === date.toDateString() &&
+                (selectedService === 'all' || apt.service === selectedService)
+            );
+
+            const container = document.getElementById('mobileDaySummary');
+            let html = `<h3 class="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+        Citas del ${date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+    </h3>`;
+
+            if (dayAppointments.length === 0) {
+                html += `<p class="text-gray-500 dark:text-gray-400">No hay citas para este día</p>`;
+            } else {
+                html += `<div class="space-y-3">`;
+                dayAppointments.forEach(apt => {
+                    html += `
+                <div
+                    class="border rounded-lg p-3 border-gray-200 dark:border-gray-600 
+                           hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                    onclick="showAppointmentDetails(${apt.id})"
+                >
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-900 dark:text-white">${apt.time}</span>
+                        <span class="px-2 py-0.5 rounded text-xs text-white ${services[apt.service].color}">
+                            ${services[apt.service].name}
+                        </span>
+                    </div>
+                    <p class="font-semibold text-gray-900 dark:text-white">${apt.client}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">${apt.location}</p>
+                </div>
+            `;
+                });
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+            container.classList.remove('hidden');
         }
 
         function toggleNonWorkingDay(element) {
@@ -796,10 +847,6 @@
                             </div>
                             <div class="space-y-1">
                                 <p class="font-medium text-gray-900 dark:text-white">${apt.client}</p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    ${apt.duration} minutos
-                                </p>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                     <i class="fas fa-map-marker-alt mr-1"></i>
                                     ${apt.location}
@@ -927,7 +974,7 @@
                         <div class="flex items-center gap-3">
                             <i class="fas fa-clock text-gray-500 dark:text-gray-400"></i>
                             <div>
-                                <p class="font-medium text-gray-900 dark:text-white">${appointment.time} (${appointment.duration} min)</p>
+                                <p class="font-medium text-gray-900 dark:text-white">${appointment.time}</p>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">${appointment.date.toLocaleDateString('es-ES')}</p>
                             </div>
                         </div>

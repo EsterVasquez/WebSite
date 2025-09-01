@@ -142,11 +142,7 @@ def webhook(request):
                         "type": "text",
                         "text": {"body": "No entiendo tu mensaje."}
                     }
-
                 send_messages(payloads)
-                response = requests.post(URL, headers=HEADERS, json=payloads)
-                print(
-                    f"Respuesta enviada: {response.status_code} - {response.text}")
 
         except Exception as e:
             print(f"Error procesando el mensaje: {e}")
