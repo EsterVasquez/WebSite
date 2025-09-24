@@ -381,7 +381,8 @@ def cotizar_sesiones_tematicas(sender):
     }]
 
 
-    return[]
+def contratar(sender):
+    return []
 
 
 def entrega_1(sender):
