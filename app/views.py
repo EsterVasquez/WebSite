@@ -16,9 +16,11 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
+opciones_bot = " "
+payloads = []
 
 def first_message(sender):
-
+    print("\nFUNCION\n")
     return [{
         "messaging_product": "whatsapp",
         "to": sender,
@@ -100,6 +102,7 @@ def agendar_1(sender):
 
 
 def cotizar_1(sender):
+    opciones_bot = "cotizar"
     return [{
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -177,7 +180,7 @@ def cotizar_eventos(sender):
                         "title": "Bodas",
                         "rows": [
                             {
-                                "id": "Link",
+                                "id": "Link_Bodas",
                                 "title": "Bodas",
                                 "description": " ",
                             }
@@ -187,7 +190,7 @@ def cotizar_eventos(sender):
                         "title": "Xv Años",
                         "rows": [
                             {
-                                "id": "Link",
+                                "id": "Link_XV",
                                 "title": "Xv Años",
                                 "description": "",
                             }
@@ -197,7 +200,7 @@ def cotizar_eventos(sender):
                         "title": "Graduaciones",
                         "rows": [
                             {
-                                "id": "Link",
+                                "id": "Link_Graduaciones",
                                 "title": "Graduaciones",
                                 "description": "",
                             }
@@ -207,7 +210,7 @@ def cotizar_eventos(sender):
                         "title": "Bautizos o 1ª Comunion",
                         "rows": [
                             {
-                                "id": "link",
+                                "id": "Link",
                                 "title": "Buatizos o 1ª Comunión",
                                 "description": "",
                             }
@@ -342,7 +345,7 @@ def cotizar_sesiones_tematicas(sender):
     ]
 
 
-def enviar_link(sender):
+
     # logica de que link enviar segun el servicio que quiere el cliente conocer precios
     return [{
         "messaging_product": "whatsapp",
@@ -376,8 +379,8 @@ def enviar_link(sender):
             }
         }
     }]
-    
-def contratar(sender):
+
+
     return[]
 
 
@@ -401,6 +404,7 @@ def dudas(sender):
     }]
 
 
+
 COMMAND_HANDLERS = {
     "Hola": first_message,
     "Agendar": agendar_1,
@@ -410,14 +414,21 @@ COMMAND_HANDLERS = {
     "Eventos": cotizar_eventos,
     "Sesiones": cotizar_sesiones,
     "Sesiones Tematicas": cotizar_sesiones_tematicas,
-    "Link": enviar_link,
-    "Contratar": contratar
 
 }
 
-
+#funciones que no se usan en el diccionario
+def agendar_cotizar_serivicio(id,sender):
+    partes= id.split("_")
+    return [{
+        "messaging_product": "whatsapp",
+        "to": sender,
+        "type": "text",
+        "text": {"body": "AQUI VA EL LINK"}
+    }]
 def send_messages(payloads):
     """Envía cada payload y maneja errores/respaldos de forma centralizada."""
+
     for payload in payloads:
         resp = requests.post(URL, headers=HEADERS, json=payload)
         if not resp.ok:
@@ -443,19 +454,25 @@ def webhook(request):
                 message = messages[0]
                 print(f"\n{message}\n")
                 sender = message["from"]
-                type = message["type"]
+                message_type = message["type"]
 
-                if type == "text":
-
+                if message_type == "text":
                     text = message["text"]["body"]
-                    print(f"Mensaje de {sender}: {text}")
                     handler = COMMAND_HANDLERS.get(text)
+
                 else:
                     id = message["interactive"]["list_reply"]["id"]
-                    handler = COMMAND_HANDLERS.get(id)
+                    if "_" in id :
+                        payloads = agendar_cotizar_serivicio(id,sender)
+                    else:
+                        handler = COMMAND_HANDLERS.get(id)
 
-                if handler:
+                if payloads:
+                    pass
+                elif handler:
                     payloads = handler(sender)
+                    print("\nPAYLOAD TYPE\n")
+                    print(type(payloads))
                 else:
                     payloads = [{
                         "messaging_product": "whatsapp",
