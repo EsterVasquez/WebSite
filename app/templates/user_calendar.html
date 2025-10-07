@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Reservar cita — Jonathan CA</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script>
+        tailwind.config = { darkMode: 'class' };
+    </script>
+</head>
+
+<body class="h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors">
+    <div class="min-h-screen p-6">
+        <div class="max-w-3xl mx-auto">
+            <!-- Header -->
+            <header class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold flex items-center gap-2">
+                        <i class="fas fa-camera text-blue-600"></i>
+                        Jonathan CA
+                    </h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Reserva tu cita </p>
+                </div>
+                <button id="toggleDark"
+                    class="p-2 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block text-yellow-400"></i>
+                </button>
+            </header>
+
+            <!-- Card -->
+            <main class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <button id="prevMonth" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"><i
+                                class="fas fa-chevron-left text-gray-500"></i></button>
+                        <button id="nextMonth" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"><i
+                                class="fas fa-chevron-right text-gray-500"></i></button>
+                    </div>
+                    <div class="text-center">
+                        <div id="monthLabel" class="text-lg font-medium"></div>
+                        <div id="todayLabel" class="text-xs text-gray-500 dark:text-gray-400"></div>
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="grid grid-cols-7 text-center text-xs mb-2 text-gray-500 dark:text-gray-400">
+                    <div>Lun</div>
+                    <div>Mar</div>
+                    <div>Mié</div>
+                    <div>Jue</div>
+                    <div>Vie</div>
+                    <div>Sáb</div>
+                    <div>Dom</div>
+                </div>
+
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1 text-sm"></div>
+
+                <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">Selecciona un día disponible para reservar.</p>
+            </main>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <form id="bookingForm" class="p-4">
+                <div class="flex items-center justify-between border-b pb-3 mb-3">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Reservar cita</h3>
+                    <button type="button" id="closeModal"
+                        class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">&times;</button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm text-gray-700 dark:text-gray-300">Fecha</label>
+                        <input id="bookDate" type="text" readonly
+                            class="w-full px-3 py-2 rounded bg-gray-50 dark:bg-gray-700" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-700 dark:text-gray-300">Hora</label>
+                        <input id="bookTime" type="time" required
+                            class="w-full px-3 py-2 rounded bg-white dark:bg-gray-700" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-700 dark:text-gray-300">Nombre</label>
+                        <input id="bookName" type="text" required
+                            class="w-full px-3 py-2 rounded bg-white dark:bg-gray-700" placeholder="Tu nombre" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-700 dark:text-gray-300">Teléfono (opcional)</label>
+                        <input id="bookPhone" type="tel" class="w-full px-3 py-2 rounded bg-white dark:bg-gray-700"
+                            placeholder="+52 ..." />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-700 dark:text-gray-300">Servicio</label>
+                        <select id="bookService"
+                            class="w-full px-3 py-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="">Selecciona un servicio</option>
+                            <!-- TODO: ACTUALIZAR CON DATOS REALES -->
+                            <option value="wedding">Bodas</option>
+                            <option value="portrait">Retratos</option>
+                            <option value="family">Familiar</option>
+                            <option value="corporate">Corporativo</option>
+                            <option value="event">Eventos</option>
+                            <option value="product">Producto</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex justify-end gap-2">
+                    <button type="button" id="cancelBooking"
+                        class="px-4 py-2 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancelar</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/user_calendar.js"></script>
+</body>
+
+</html>
