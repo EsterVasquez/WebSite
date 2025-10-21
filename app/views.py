@@ -16,8 +16,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-opciones_bot = " "
-payloads = []
+options_cotizar_agendar = " "
 
 def first_message(sender):
     print("\nFUNCION\n")
@@ -92,18 +91,9 @@ def first_message(sender):
     ]
 
 
-def agendar_1(sender):
-    return [{
-        "messaging_product": "whatsapp",
-        "to": sender,
-        "type": "text",
-        "text": {"body": "Hola!!! \nGracias por comunicarte a Jonathan CA Photography. \nSoy el asistente virtual y te ayudaré a agendar tu sesion de navidad."}
-    }]
+def create_services_payload(sender):
 
-
-def cotizar_1(sender):
-    opciones_bot = "cotizar"
-    return [{
+    servicios = [{
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
         "to": sender,
@@ -155,6 +145,20 @@ def cotizar_1(sender):
             }
         }
     }]
+
+
+def cotizar_1(sender):
+    global options_cotizar_agendar
+    options_cotizar_agendar = "cotizar"
+    servicios = create_services_payload(sender)
+    return servicios
+
+
+def agendar_1(sender):
+    global options_cotizar_agendar
+    options_cotizar_agendar = "agendar"
+    servicios = create_services_payload(sender)
+    return servicios
 
 
 def cotizar_eventos(sender):
@@ -344,8 +348,6 @@ def cotizar_sesiones_tematicas(sender):
     }
     ]
 
-
-
     # logica de que link enviar segun el servicio que quiere el cliente conocer precios
     return [{
         "messaging_product": "whatsapp",
@@ -405,7 +407,6 @@ def dudas(sender):
     }]
 
 
-
 COMMAND_HANDLERS = {
     "Hola": first_message,
     "Agendar": agendar_1,
@@ -418,15 +419,20 @@ COMMAND_HANDLERS = {
 
 }
 
-#funciones que no se usan en el diccionario
-def agendar_cotizar_serivicio(id,sender):
-    partes= id.split("_")
+# funciones que no se usan en el diccionario
+
+
+def agendar_cotizar_serivicio(id, sender):
+    partes = id.split("_")
+    # podria usar un interactive call to action button
     return [{
         "messaging_product": "whatsapp",
         "to": sender,
         "type": "text",
         "text": {"body": "AQUI VA EL LINK"}
-    }]
+            }]
+
+
 def send_messages(payloads):
     """Envía cada payload y maneja errores/respaldos de forma centralizada."""
 
@@ -439,6 +445,7 @@ def send_messages(payloads):
 
 @csrf_exempt
 def webhook(request):
+    payloads =[]
 
     if request.method == "POST":
         try:
@@ -463,8 +470,8 @@ def webhook(request):
 
                 else:
                     id = message["interactive"]["list_reply"]["id"]
-                    if "_" in id :
-                        payloads = agendar_cotizar_serivicio(id,sender)
+                    if "_" in id:
+                        payloads = agendar_cotizar_serivicio(id, sender)
                     else:
                         handler = COMMAND_HANDLERS.get(id)
 
@@ -472,8 +479,7 @@ def webhook(request):
                     pass
                 elif handler:
                     payloads = handler(sender)
-                    print("\nPAYLOAD TYPE\n")
-                    print(type(payloads))
+
                 else:
                     payloads = [{
                         "messaging_product": "whatsapp",
