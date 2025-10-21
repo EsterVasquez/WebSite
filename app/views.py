@@ -500,3 +500,7 @@ def webhook(request):
 
 def calendar(request):
     return render(request, "calendar.html")
+
+
+def user_calendar(request):
+    return render(request, "user_calendar.html")
