@@ -19,7 +19,6 @@ HEADERS = {
 options_cotizar_agendar = " "
 
 def first_message(sender):
-    print("\nFUNCION\n")
     return [{
         "messaging_product": "whatsapp",
         "to": sender,
@@ -93,7 +92,7 @@ def first_message(sender):
 
 def create_services_payload(sender):
 
-    servicios = [{
+    return [{
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
         "to": sender,
@@ -151,6 +150,7 @@ def cotizar_1(sender):
     global options_cotizar_agendar
     options_cotizar_agendar = "cotizar"
     servicios = create_services_payload(sender)
+    print(servicios)
     return servicios
 
 
@@ -474,6 +474,7 @@ def webhook(request):
                         payloads = agendar_cotizar_serivicio(id, sender)
                     else:
                         handler = COMMAND_HANDLERS.get(id)
+
 
                 if payloads:
                     pass
