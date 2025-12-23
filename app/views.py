@@ -504,3 +504,23 @@ def calendar(request):
 
 def user_calendar(request):
     return render(request, "user_calendar.html")
+
+def login(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect("calendar")  # o la vista principal
+        else:
+            return render(
+                request,
+                "login.html",
+                {"error": "Usuario o contraseña incorrectos"},
+            )
+
+    # GET
+    return render(request, "login.html")
