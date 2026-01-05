@@ -49,7 +49,7 @@ def first_message(sender):
                             {
                                 "id": "Agendar",
                                 "title": "Agendar",
-                                "description": "Agendar: Sesión o Evento ",
+                                "description": "",
                             }
                         ]
                     },
@@ -102,10 +102,10 @@ def create_services_payload(sender):
             "type": "list",
             "header": {
                 "type": "text",
-                "text": "¿Quieres conocer nuestros precios?"
+                "text": "Esto son nuestros servicios 😃"
             },
             "body": {
-                "text": "Selecciona 👇 que servicio quieres conocer ."
+                "text": "Selecciona 👇."
             },
             "action": {
                 "button": "Opciones",
@@ -115,7 +115,7 @@ def create_services_payload(sender):
                         "rows": [
                             {
                                 "id": "Eventos",
-                                "title": "Eventos Sociales",
+                                "title": "Eventos Sociales:",
                                 "description": "Bodas, XV Años, Graduaciones, Primera Comunion y Bautizos",
                             }
                         ]
@@ -125,7 +125,7 @@ def create_services_payload(sender):
                         "rows": [
                             {
                                 "id": "Sesiones",
-                                "title": "Sesiones de estudio",
+                                "title": "Sesiones de estudio:",
                                 "description": "Sesione casual, familiar, cumpleaños, maternidad y recien nacido ",
                             }
                         ]
@@ -135,7 +135,7 @@ def create_services_payload(sender):
                         "rows": [
                             {
                                 "id": "Sesiones tematicas",
-                                "title": "Sesiones Tematicas",
+                                "title": "Sesiones Tematicas:",
                                 "description": "Sesiones con mamá, sesiones con papá y Sesiones navideñas",
                             }
                         ]
@@ -161,7 +161,7 @@ def agendar_1(sender):
     return servicios
 
 
-def cotizar_eventos(sender):
+def eventos(sender):
     return [{
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -175,7 +175,7 @@ def cotizar_eventos(sender):
                 "text": "Eventos"
             },
             "body": {
-                "text": "Selecciona 👇 que tipo de evento quieres conocer ."
+                "text": "Selecciona 👇 que tipo de evento."
             },
             "action": {
                 "button": "Opciones",
@@ -184,7 +184,7 @@ def cotizar_eventos(sender):
                         "title": "Bodas",
                         "rows": [
                             {
-                                "id": "Link_Bodas",
+                                "id": "Service_Boda",
                                 "title": "Bodas",
                                 "description": " ",
                             }
@@ -194,7 +194,7 @@ def cotizar_eventos(sender):
                         "title": "Xv Años",
                         "rows": [
                             {
-                                "id": "Link_XV",
+                                "id": "Service_XV",
                                 "title": "Xv Años",
                                 "description": "",
                             }
@@ -204,7 +204,7 @@ def cotizar_eventos(sender):
                         "title": "Graduaciones",
                         "rows": [
                             {
-                                "id": "Link_Graduaciones",
+                                "id": "Service_Graduaciones",
                                 "title": "Graduaciones",
                                 "description": "",
                             }
@@ -214,7 +214,7 @@ def cotizar_eventos(sender):
                         "title": "Bautizos o 1ª Comunion",
                         "rows": [
                             {
-                                "id": "Link",
+                                "id": "Service_Bautizo",
                                 "title": "Buatizos o 1ª Comunión",
                                 "description": "",
                             }
@@ -227,7 +227,7 @@ def cotizar_eventos(sender):
     ]
 
 
-def cotizar_sesiones(sender):
+def sesiones(sender):
     return [{
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -241,7 +241,7 @@ def cotizar_sesiones(sender):
                 "text": "Sesiones de estudio"
             },
             "body": {
-                "text": "Selecciona 👇 que tipo de sesion quieres conocer ."
+                "text": "Sesiones para cada ocasión 🤩."
             },
             "action": {
                 "button": "Opciones",
@@ -250,9 +250,9 @@ def cotizar_sesiones(sender):
                         "title": "Casual o familiar",
                         "rows": [
                             {
-                                "id": "Link",
+                                "id": "Service_Casual",
                                 "title": "Casual o familiar",
-                                "description": "Una sesion en el estudio, ya se individual de pareja o familiar.  ",
+                                "description": "Puede ser individual, de pareja o familiar.",
                             }
                         ]
                     },
@@ -260,7 +260,7 @@ def cotizar_sesiones(sender):
                         "title": "Cumpleaños",
                         "rows": [
                             {
-                                "id": "1",
+                                "id": "Service_Cumpleaños",
                                 "title": "Cumpleaños",
                                 "description": "",
                             }
@@ -270,7 +270,7 @@ def cotizar_sesiones(sender):
                         "title": "Maternidad",
                         "rows": [
                             {
-                                "id": "2",
+                                "id": "Service_Maternidad",
                                 "title": "Maternidad",
                                 "description": "",
                             }
@@ -280,7 +280,7 @@ def cotizar_sesiones(sender):
                         "title": "Recien Nacido",
                         "rows": [
                             {
-                                "id": "3",
+                                "id": "Service_Nacido",
                                 "title": "Recien Nacido",
                                 "description": "",
                             }
@@ -293,7 +293,7 @@ def cotizar_sesiones(sender):
     ]
 
 
-def cotizar_sesiones_tematicas(sender):
+def sesiones_tematicas(sender):
     return [{
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
@@ -304,30 +304,30 @@ def cotizar_sesiones_tematicas(sender):
             "type": "list",
             "header": {
                 "type": "text",
-                "text": "Eventos"
+                "text": "Sesiones temáticas"
             },
             "body": {
-                "text": "Selecciona 👇 que tipo de evento quieres conocer ."
+                "text": "Nuestras sesiones para las épocas especiales del año "
             },
             "action": {
                 "button": "Opciones",
                 "sections": [
                     {
-                        "title": "Sesión mamá",
+                        "title": "Dia de las madres",
                         "rows": [
                             {
-                                "id": "link",
-                                "title": "Sesión mamá ",
+                                "id": "Service_Mama",
+                                "title": "Dia de las madres ",
                                 "description": " ",
                             }
                         ]
                     },
                     {
-                        "title": "Sesión Papá",
+                        "title": "Día del padre",
                         "rows": [
                             {
-                                "id": "link",
-                                "title": "Sesión Papá",
+                                "id": "Service_Papa",
+                                "title": "Dia del padre",
                                 "description": "",
                             }
                         ]
@@ -336,7 +336,7 @@ def cotizar_sesiones_tematicas(sender):
                         "title": "Sesión navideña",
                         "rows": [
                             {
-                                "id": "link",
+                                "id": "Service_Navideña",
                                 "title": "Sesion navideña",
                                 "description": "",
                             }
@@ -349,38 +349,7 @@ def cotizar_sesiones_tematicas(sender):
     ]
 
     # logica de que link enviar segun el servicio que quiere el cliente conocer precios
-    return [{
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": sender,
-        "type": "interactive",
-        "interactive": {
-            "type": "button",
-            "header": {
-                "type": "image",
-                "image": {
-                    "id": "link_sender"
-                }
-            },
-            "body": {
-                "text": "El enlace enviado contiene la informacion. Por favor diganos si desea contratar"
-            },
-            "footer": {
-                "text": "En caso de tener alguna duda, contactenos de nuevo, con gusto rsolveremos sus dudas"
-            },
-            "action": {
-                "buttons": [
-                    {
-                        "type": "reply",
-                        "reply": {
-                            "id": "contratar",
-                            "title": "Quiero contratar"
-                        }
-                    }
-                ]
-            }
-        }
-    }]
+    return []
 
 
 def contratar(sender):
@@ -413,29 +382,59 @@ COMMAND_HANDLERS = {
     "Cotizar": cotizar_1,
     "Entrega": entrega_1,
     "Dudas": dudas,
-    "Eventos": cotizar_eventos,
-    "Sesiones": cotizar_sesiones,
-    "Sesiones Tematicas": cotizar_sesiones_tematicas,
+    "Eventos": eventos,
+    "Sesiones": sesiones,
+    "Sesiones Tematicas": sesiones_tematicas,
 
 }
 
 # funciones que no se usan en el diccionario
 
 
-def agendar_cotizar_serivicio(id, sender):
+def agendar_o_cotizar_serivicio(id, sender):
+    LINKS = {
+        "Service_Boda": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+    }
     partes = id.split("_")
+
     # podria usar un interactive call to action button
     return [{
         "messaging_product": "whatsapp",
         "to": sender,
         "type": "text",
-        "text": {"body": "AQUI VA EL LINK"}
-            }]
+        "text": {"body": LINKS[id]}
+            },
+        {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": sender,
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {
+                "text": "El enlace enviado contiene la informacion. Por favor diganos si desea contratar"
+            },
+            "footer": {
+                "text": "En caso de tener alguna duda, contactenos de nuevo, con gusto rsolveremos sus dudas"
+            },
+            "action": {
+                "buttons": [
+                    {
+                        "type": "reply",
+                        "reply": {
+                            "id": "contratar",
+                            "title": "Quiero contratar"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+            ]
 
 
 def send_messages(payloads):
     """Envía cada payload y maneja errores/respaldos de forma centralizada."""
-
     for payload in payloads:
         resp = requests.post(URL, headers=HEADERS, json=payload)
         if not resp.ok:
@@ -471,7 +470,7 @@ def webhook(request):
                 else:
                     id = message["interactive"]["list_reply"]["id"]
                     if "_" in id:
-                        payloads = agendar_cotizar_serivicio(id, sender)
+                        payloads = agendar_o_cotizar_serivicio(id, sender)
                     else:
                         handler = COMMAND_HANDLERS.get(id)
 
