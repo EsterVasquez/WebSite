@@ -25,4 +25,5 @@ urlpatterns = [
     path('webhook/', webhook, name='webhook'),
     path('user/<int:user_id>/', get_user_api),
     path('calendario/', user_calendar, name='user_calendar'),
+    path('login/', login, name='login'),
 ]

@@ -14,7 +14,7 @@ const appointments = [
         id: 1,
         date: new Date(2025, 6, 15),
         time: "10:00",
-        duration: 120, // DELETE THIS LINE
+        duration: 120, //TODO: DELETE THIS LINE!!!!!!!!!!!!!!
         client: "María González",
         phone: "+52 55 1234 5678",
         service: "wedding",
