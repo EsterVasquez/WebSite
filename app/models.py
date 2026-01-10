@@ -77,7 +77,7 @@ class AppointmentAvailable(models.Model):
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='disponible')
 
     def __str__(self):
-        return f"{self.tier.nombre} - {self.fecha} ({self.estado})"
+        return f"{self.tier.name} - {self.fecha} ({self.estado})"
 class Booking(models.Model):
     STATUS_CHOICES = [
         ('Pendiente', 'Pendiente'),

@@ -14,10 +14,99 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv()
+
+# Logs configuration
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "console_fmt": {
+            "format": "🔴 {levelname} | {asctime} | {message}",
+            "style": "{",
+        },
+        "file_fmt": {
+            "format": "[{asctime}] {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "console_fmt",
+            "level": LOG_LEVEL,
+        },
+        "wa_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "whatsapp_webhook.log"),
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "file_fmt",
+            "encoding": "utf-8",
+        },
+        "wa_errors": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": str(LOG_DIR / "whatsapp_webhook.error.log"),
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "file_fmt",
+            "encoding": "utf-8",
+        },
+        "null": {
+            "class": "logging.NullHandler",
+        },
+    },
+
+    "loggers": {
+        "wa_bot": {
+            "handlers": ["console", "wa_file"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "wa_bot.errors": {
+            "handlers": ["console", "wa_errors"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "wa_payloads": {
+            "handlers": ["console", "wa_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+
+        #silencia las líneas:  "POST /webhook/ HTTP/1.1" 200 ...
+        "django.server": {
+            "handlers": ["null"],
+            "level": "CRITICAL",
+            "propagate": False,
+        },
+
+        # (opcional) baja ruido general de Django
+        "django": {
+            "handlers": ["null"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+
+    # ✅ evita duplicados del root imprimiendo INFO
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+}
 
 
 # Quick-start development settings - unsuitable for production
