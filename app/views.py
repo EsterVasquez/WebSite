@@ -1,10 +1,16 @@
 import json
 import requests
 import os
+import time
+import uuid
+import logging
+from .wa_logs import log_event, log_error, pick_meta, safe_json, logger, request_start, request_end
 from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import redirect
 
 load_dotenv()
 
@@ -441,69 +447,125 @@ def agendar_o_cotizar_serivicio(id, sender):
             ]
 
 
-def send_messages(payloads):
-    """Envía cada payload y maneja errores/respaldos de forma centralizada."""
-    for payload in payloads:
-        resp = requests.post(URL, headers=HEADERS, json=payload)
-        if not resp.ok:
-            # podría reintentar, loggear en un sistema de alertas, etc.
-            print(f"Error al enviar: {resp.status_code} – {resp.text}")
+
+def summarize_outgoing(payload: dict) -> str:
+    t = payload.get("type")
+    to = payload.get("to")
+
+    if t == "text":
+        body = (payload.get("text") or {}).get("body", "")
+        clean = body.replace("\n", "\\n")
+        return f"type=text to={to} len={len(body)} preview='{clean[:120]}'"
+
+    if t == "interactive":
+        it = (payload.get("interactive") or {}).get("type")
+        header = ((payload.get("interactive") or {}).get("header") or {}).get("text", "")
+        return f"type=interactive({it}) to={to} header='{header[:80]}'"
+
+    return f"type={t} to={to}"
+
+
+# Envia los mensajes y crea los logs
+def send_messages(payloads, request_id: str):
+    for i, payload in enumerate(payloads, start=1):
+        log_event("OUTGOING_SEND", request_id, n=f"{i}/{len(payloads)}", summary=summarize_outgoing(payload))
+        payload_logger = logging.getLogger("wa_payloads")
+        payload_logger.debug(f"OUTGOING_PAYLOAD | request_id={request_id}\n{safe_json(payload, max_len=20000)}")
+        t0 = time.time()
+        try:
+            resp = requests.post(URL, headers=HEADERS, json=payload, timeout=15)
+            ms = int((time.time() - t0) * 1000)
+
+            if resp.ok:
+                log_event("OUTGOING_OK", request_id, status=resp.status_code, ms=ms)
+            else:
+                log_error("OUTGOING_FAIL", request_id, status=resp.status_code, ms=ms, resp=resp.text[:500].replace("\n", " "))
+        except requests.RequestException as e:
+            log_error("OUTGOING_EXCEPTION", request_id, err=str(e))
 
 
 @csrf_exempt
 def webhook(request):
-    payloads =[]
+    t0 = time.perf_counter()
+    request_id = uuid.uuid4().hex[:10]
+    payloads = []
 
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            print("Mensaje recibido:")
-            print(json.dumps(data, indent=2))
-
-            entry = data["entry"][0]
-            changes = entry["changes"][0]
-            value = changes["value"]
-            messages = value.get("messages")
-
-            if messages:
-                message = messages[0]
-                print(f"\n{message}\n")
-                sender = message["from"]
-                message_type = message["type"]
-
-                if message_type == "text":
-                    text = message["text"]["body"]
-                    handler = COMMAND_HANDLERS.get(text)
-
-                else:
-                    id = message["interactive"]["list_reply"]["id"]
-                    if "_" in id:
-                        payloads = agendar_o_cotizar_serivicio(id, sender)
-                    else:
-                        handler = COMMAND_HANDLERS.get(id)
-
-
-                if payloads:
-                    pass
-                elif handler:
-                    payloads = handler(sender)
-
-                else:
-                    payloads = [{
-                        "messaging_product": "whatsapp",
-                        "to": sender,
-                        "type": "text",
-                        "text": {"body": "No entiendo tu mensaje."}
-                    }]
-
-                send_messages(payloads)
-
-        except Exception as e:
-            print(f"Error procesando el mensaje: {e}")
-
-        return HttpResponse("EVENT_RECEIVED", status=200)
-    else:
+    if request.method != "POST":
+        log_event("WEBHOOK_METHOD_NOT_ALLOWED", request_id, method=request.method)
         return HttpResponse("Método no permitido", status=405)
+
+    try:
+        data = json.loads(request.body)
+
+        entry = (data.get("entry") or [{}])[0]
+        changes = (entry.get("changes") or [{}])[0]
+        value = changes.get("value") or {}
+
+        #Si NO hay messages => ignorar COMPLETAMENTE (statuses, delivery, read, etc.)
+        messages = value.get("messages")
+        if not messages:
+            return HttpResponse("EVENT_RECEIVED", status=200)
+
+        meta = pick_meta(data)
+        request_start(request_id, **meta)
+        log_event("INCOMING", request_id, **meta)
+
+        message = messages[0]
+        sender = message["from"]
+        message_type = message["type"]
+
+        handler = None
+        selected_key = None
+
+        if message_type == "text":
+            selected_key = message["text"]["body"]
+            handler = COMMAND_HANDLERS.get(selected_key)
+        else:
+            interactive = message.get("interactive") or {}
+            list_reply = interactive.get("list_reply")
+            button_reply = interactive.get("button_reply")
+
+            if list_reply:
+                selected_key = list_reply.get("id")
+            elif button_reply:
+                selected_key = button_reply.get("id")
+
+            if selected_key and "_" in selected_key:
+                payloads = agendar_o_cotizar_serivicio(selected_key, sender)
+                log_event("ROUTE_SPECIAL", request_id, key=selected_key)
+            else:
+                handler = COMMAND_HANDLERS.get(selected_key)
+
+        log_event("ROUTE", request_id, key=selected_key, has_handler=bool(handler), payloads_pre=len(payloads))
+
+        if not payloads and handler:
+            payloads = handler(sender)
+
+        if not payloads:
+            payloads = [{
+                "messaging_product": "whatsapp",
+                "to": sender,
+                "type": "text",
+                "text": {"body": "No entiendo tu mensaje."}
+            }]
+
+        log_event("PAYLOADS_READY", request_id, count=len(payloads), to=sender)
+
+        send_messages(payloads, request_id=request_id)
+        elapsed_ms = int((time.perf_counter() - t0) * 1000)
+        request_end(request_id, ms=elapsed_ms, sent=len(payloads))
+
+    except Exception as e:
+        # log con contexto
+        log_error("WEBHOOK_EXCEPTION", request_id, err=str(e))
+        # si quieres, también guarda el body recortado (útil para debug)
+        try:
+            raw = request.body.decode("utf-8", errors="ignore")
+            log_error("RAW_BODY", request_id, body=raw[:2000])
+        except Exception:
+            pass
+
+    return HttpResponse("EVENT_RECEIVED", status=200)
 
 
 def calendar(request):
@@ -513,7 +575,7 @@ def calendar(request):
 def user_calendar(request):
     return render(request, "user_calendar.html")
 
-def login(request):
+def auth_login(request):
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
