@@ -134,7 +134,7 @@ def create_services_payload(sender):
                         "title": "Sesiones tematicas ",
                         "rows": [
                             {
-                                "id": "Sesiones tematicas",
+                                "id": "Sesiones Tematicas",
                                 "title": "Sesiones Tematicas:",
                                 "description": "Sesiones con mamá, sesiones con papá y Sesiones navideñas",
                             }
@@ -150,7 +150,6 @@ def cotizar_1(sender):
     global options_cotizar_agendar
     options_cotizar_agendar = "cotizar"
     servicios = create_services_payload(sender)
-    print(servicios)
     return servicios
 
 
@@ -394,8 +393,17 @@ COMMAND_HANDLERS = {
 def agendar_o_cotizar_serivicio(id, sender):
     LINKS = {
         "Service_Boda": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_XV": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_Graduaciones": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_Bautizo": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_Casual": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_Cumpleaños": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_Maternidad": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_Nacido": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_Mama": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",    
+        "Service_Papa": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
+        "Service_Navideña": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
     }
-    partes = id.split("_")
 
     # podria usar un interactive call to action button
     return [{
@@ -415,7 +423,7 @@ def agendar_o_cotizar_serivicio(id, sender):
                 "text": "El enlace enviado contiene la informacion. Por favor diganos si desea contratar"
             },
             "footer": {
-                "text": "En caso de tener alguna duda, contactenos de nuevo, con gusto rsolveremos sus dudas"
+                "text": "En caso de tener alguna duda marcar al 3781088506"
             },
             "action": {
                 "buttons": [
