@@ -358,7 +358,7 @@ def sesiones_tematicas(sender):
 
 
 def contratar(sender):
-    return []
+return []
 
 
 def entrega_1(sender):
@@ -390,6 +390,7 @@ COMMAND_HANDLERS = {
     "Eventos": eventos,
     "Sesiones": sesiones,
     "Sesiones Tematicas": sesiones_tematicas,
+    "Contratar" : contratar,
 
 }
 
@@ -406,10 +407,11 @@ def agendar_o_cotizar_serivicio(id, sender):
         "Service_Cumpleaños": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
         "Service_Maternidad": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
         "Service_Nacido": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
-        "Service_Mama": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",    
+        "Service_Mama": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
         "Service_Papa": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
         "Service_Navideña": "https://accounts.pixieset.com/login/?spId=gallery-dashboard",
     }
+    serivicio = id.split("_")
 
     # podria usar un interactive call to action button
     return [{
@@ -436,7 +438,7 @@ def agendar_o_cotizar_serivicio(id, sender):
                     {
                         "type": "reply",
                         "reply": {
-                            "id": "contratar",
+                            "id": "Contratar",
                             "title": "Quiero contratar"
                         }
                     }
