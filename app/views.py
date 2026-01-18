@@ -358,7 +358,7 @@ def sesiones_tematicas(sender):
 
 
 def contratar(sender):
-return []
+    return []
 
 
 def entrega_1(sender):
