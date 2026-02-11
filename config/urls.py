@@ -16,14 +16,23 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from app.views import *
-from app.calendar import *
+
+from app.api_views import (
+    available_times_api,
+    calendar_context_api,
+    confirm_booking_api,
+    dashboard_bookings_api,
+)
+from app.views import auth_login, calendar, user_calendar, webhook
 
 urlpatterns = [
     path('', calendar, name='calendar'),
     path('admin/', admin.site.urls),
     path('webhook/', webhook, name='webhook'),
-    path('user/<int:user_id>/', get_user_api),
-    path('calendario/', user_calendar, name='user_calendar'),
-    path('login/', login, name='login'),
+    path('calendario/<uuid:token>/', user_calendar, name='user_calendar'),
+    path('login/', auth_login, name='login'),
+    path('api/dashboard/bookings/', dashboard_bookings_api, name='dashboard_bookings_api'),
+    path('api/calendar/<uuid:token>/context/', calendar_context_api, name='calendar_context_api'),
+    path('api/calendar/<uuid:token>/available-times/', available_times_api, name='available_times_api'),
+    path('api/calendar/<uuid:token>/confirm/', confirm_booking_api, name='confirm_booking_api'),
 ]

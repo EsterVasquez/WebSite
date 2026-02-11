@@ -2,88 +2,73 @@
 {% load static %}
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirmar cita</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar cita</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow p-6 md:p-10 space-y-8">
+        <header class="space-y-2">
+            <p class="text-xs uppercase tracking-wider text-slate-500">Jonathan CA Photography</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Selecciona fecha y hora</h1>
+            <p class="text-slate-500">Completa tu reserva desde esta página única.</p>
+        </header>
 
-<body class="bg-gray-100 min-h-screen flex items-start md:items-center justify-center p-4">
+        {% if booking_error %}
+            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+                {{ booking_error }}
+            </div>
+        {% else %}
+            <section class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <article class="rounded-xl border bg-slate-50 p-3">
+                    <p class="text-xs uppercase text-slate-500">Servicio</p>
+                    <p id="serviceName" class="font-semibold text-slate-800">{{ service_name }}</p>
+                </article>
+                <article class="rounded-xl border bg-slate-50 p-3">
+                    <p class="text-xs uppercase text-slate-500">Tier actual</p>
+                    <p id="tierName" class="font-semibold text-slate-800">{{ tier_name }}</p>
+                </article>
+                <article class="rounded-xl border bg-slate-50 p-3">
+                    <p class="text-xs uppercase text-slate-500">Duración</p>
+                    <p id="tierDuration" class="font-semibold text-slate-800">{{ tier_duration }} min</p>
+                </article>
+                <article class="rounded-xl border bg-slate-50 p-3">
+                    <p class="text-xs uppercase text-slate-500">Precio</p>
+                    <p id="tierPrice" class="font-semibold text-slate-800">$ {{ tier_price }}</p>
+                </article>
+            </section>
 
-<div class="w-full max-w-5xl bg-white rounded-2xl shadow-lg p-6 md:p-10 space-y-8">
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-3">
+                    <label for="tierSelect" class="block text-sm font-medium text-slate-700">Paquete</label>
+                    <select id="tierSelect" class="w-full border rounded-lg p-3"></select>
 
-  <div class="text-center space-y-2">
-    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Confirma tu cita</h1>
-    <p class="text-sm md:text-base text-gray-500">
-      Solo elige el día y la hora que mejor te convenga
-    </p>
-  </div>
+                    <label for="datePicker" class="block text-sm font-medium text-slate-700">Fecha</label>
+                    <input id="datePicker" type="date" class="w-full border rounded-lg p-3">
+                </div>
 
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-    <div class="bg-blue-50/50 p-3 md:p-4 rounded-xl border border-blue-100">
-      <p class="text-xs uppercase tracking-wider text-blue-600 font-bold">Servicio</p>
-      <p class="font-semibold text-gray-800 truncate">{{ service.name }}</p>
+                <div class="space-y-3">
+                    <p class="text-sm font-medium text-slate-700">Horarios disponibles</p>
+                    <div id="timeSlots" class="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto border rounded-lg p-3">
+                        <p class="text-sm text-slate-500 col-span-full">Selecciona una fecha.</p>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="pt-4 border-t flex flex-col md:flex-row items-center justify-between gap-3">
+                <p id="feedback" class="text-sm text-slate-500"></p>
+                <button id="confirmBtn" disabled class="bg-slate-800 text-white px-6 py-3 rounded-lg disabled:opacity-40">
+                    Confirmar cita
+                </button>
+            </footer>
+        {% endif %}
     </div>
 
-    <div class="bg-gray-50 p-3 md:p-4 rounded-xl border">
-      <p class="text-xs uppercase tracking-wider text-gray-500 font-bold">Tier</p>
-      <p class="font-semibold text-gray-800">{{ tier.name }}</p>
-    </div>
-
-    <div class="bg-gray-50 p-3 md:p-4 rounded-xl border">
-      <p class="text-xs uppercase tracking-wider text-gray-500 font-bold">Duración</p>
-      <p class="font-semibold text-gray-800">{{ duration }} min</p>
-    </div>
-
-    <div class="bg-gray-50 p-3 md:p-4 rounded-xl border">
-      <p class="text-xs uppercase tracking-wider text-gray-500 font-bold">Precio</p>
-      <p class="font-semibold text-gray-800">${{ price }} MXN</p>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-
-    <div class="space-y-4">
-      <h2 class="font-bold text-lg flex items-center gap-2">
-        <span class="text-xl">📅</span> Selecciona el día
-      </h2>
-      <input
-        type="date"
-        id="datePicker"
-        class="w-full p-4 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all cursor-pointer"
-      >
-    </div>
-
-    <div class="space-y-4">
-      <h2 class="font-bold text-lg flex items-center gap-2">
-        <span class="text-xl">⏰</span> Horarios disponibles
-      </h2>
-
-      <div
-        id="timeSlots"
-        class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-2"
-      >
-        <p class="text-gray-400 col-span-full text-center py-8 italic">
-          Selecciona primero un día para ver disponibilidad
-        </p>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="pt-6 border-t flex flex-col md:flex-row items-center justify-between gap-4">
-    <p class="text-sm text-gray-400 hidden md:block italic">Asegúrate de revisar bien tus datos antes de confirmar.</p>
-    <button
-      id="confirmBtn"
-      disabled
-      class="w-full md:w-auto px-10 py-4 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-    >
-      Confirmar cita
-    </button>
-  </div>
-
-</div>
-
-<script src="{% static 'js/user_calendar.js' %}"></script>
+    <script>
+        window.BOOKING_TOKEN = "{{ booking_token }}";
+        window.HAS_BOOKING_ERROR = "{{ booking_error|default:'' }}" !== "";
+    </script>
+    <script src="{% static 'js/user_calendar.js' %}"></script>
 </body>
 </html>
