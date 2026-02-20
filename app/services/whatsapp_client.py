@@ -4,7 +4,7 @@ import time
 
 import requests
 
-from app.models import BotResponse, Message, User
+from app.models import Message, User
 from app.wa_logs import log_error, log_event, safe_json
 
 
@@ -55,7 +55,6 @@ def _save_outgoing(user: User | None, payload: dict) -> None:
         message_type=message_type,
         raw_payload=payload,
     )
-    BotResponse.objects.create(user=user, response=content)
 
 
 def send_messages(payloads: list[dict], request_id: str, user: User | None = None) -> None:

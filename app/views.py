@@ -3,11 +3,13 @@ import time
 import uuid
 
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
+from app.models import Booking
 from app.services.booking_service import get_booking_context
 from app.services.whatsapp_client import send_messages
 from app.wa_logs import log_error, log_event, pick_meta, request_end, request_start
@@ -62,8 +64,19 @@ def webhook(request):
     return HttpResponse("EVENT_RECEIVED", status=200)
 
 
+@login_required
 def calendar(request):
     return render(request, "calendar.html")
+
+
+@login_required
+def calendar_view(request):
+    return render(request, "calendar_view.html")
+
+
+@login_required
+def manual_booking(request):
+    return render(request, "manual_booking.html", {"booking_statuses": Booking.Status.choices})
 
 
 def user_calendar(request, token):
@@ -79,8 +92,8 @@ def user_calendar(request, token):
             },
         )
 
-    selected_tier = next(
-        (tier for tier in context["tiers"] if tier["id"] == context["selected_tier_id"]),
+    selected_package = next(
+        (item for item in context["packages"] if item["id"] == context["selected_package_id"]),
         None,
     )
     return render(
@@ -90,9 +103,10 @@ def user_calendar(request, token):
             "booking_token": context["token"],
             "service_name": context["service"]["name"],
             "service_description": context["service"]["description"],
-            "tier_name": selected_tier["name"] if selected_tier else "",
-            "tier_duration": selected_tier["duration_minutes"] if selected_tier else "",
-            "tier_price": selected_tier["price"] if selected_tier else "",
+            "package_name": selected_package["name"] if selected_package else "",
+            "package_duration": selected_package["duration_minutes"] if selected_package else "",
+            "package_price": selected_package["price"] if selected_package else "",
+            "package_deposit": selected_package["deposit_required"] if selected_package else "",
         },
     )
 

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Servicios y Eventos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen">
+<div class="max-w-7xl mx-auto p-4 md:p-8 space-y-5">
+    <header class="bg-slate-900 text-white p-6 rounded-2xl">
+        <h1 class="text-2xl font-bold">Administrador de Servicios y Eventos</h1>
+        <p class="text-sm text-slate-200 mt-1">Configura servicios, disponibilidad, horarios, excepciones y paquetes.</p>
+    </header>
+
+    {% if messages %}
+        <section class="space-y-2">
+            {% for message in messages %}
+                <div class="rounded-lg px-3 py-2 border {% if message.tags == 'error' %}bg-red-50 border-red-200 text-red-700{% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    <section class="grid grid-cols-1 xl:grid-cols-5 gap-5">
+        <aside class="xl:col-span-2 space-y-4">
+            <article class="bg-white border rounded-2xl p-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold">Servicios actuales</h2>
+                    <a href="/bot-manager/" class="text-xs text-cyan-700">Ir al editor del bot</a>
+                </div>
+                <ul class="mt-3 space-y-2 max-h-[420px] overflow-y-auto">
+                    {% for service in services %}
+                        <li class="border rounded p-2 bg-slate-50">
+                            <a href="/servicios-manager/?service={{ service.id }}" class="font-semibold text-slate-800">{{ service.name }}</a>
+                            <p class="text-xs text-slate-500">{{ service.get_availability_type_display }}{% if not service.is_active %} · Inactivo{% endif %}</p>
+                        </li>
+                    {% empty %}
+                        <li class="text-sm text-slate-500">No hay servicios registrados.</li>
+                    {% endfor %}
+                </ul>
+            </article>
+
+            <article class="bg-white border rounded-2xl p-4">
+                <h2 class="font-bold mb-3">Crear servicio o evento</h2>
+                <form method="post" action="{% url 'service_manager_create_service' %}" class="space-y-3" data-service-form>
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600">Nombre <span class="text-rose-600">*</span></label>
+                        <input name="name" required placeholder="Ejemplo: Cobertura de boda" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600">Categoría</label>
+                        <input name="category" placeholder="Ejemplo: Eventos" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600">Descripción</label>
+                        <textarea name="description" rows="2" placeholder="Describe el servicio para el cliente" class="w-full border rounded p-2 text-sm"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600">URL de cotización</label>
+                        <input name="quote_url" placeholder="https://..." class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600">Tipo de disponibilidad <span class="text-rose-600">*</span></label>
+                        <select name="availability_type" class="w-full border rounded p-2 text-sm" data-availability-select>
+                            {% for value,label in availability_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 hidden" data-temporary-range>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600">Disponible desde <span class="text-rose-600">*</span></label>
+                            <input type="date" name="available_from" class="w-full border rounded p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-600">Disponible hasta <span class="text-rose-600">*</span></label>
+                            <input type="date" name="available_until" class="w-full border rounded p-2 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600">Duración base de cita (min) <span class="text-rose-600">*</span></label>
+                        <input type="number" name="default_duration_minutes" value="60" min="1" required class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600">Intervalo entre horarios (min) <span class="text-rose-600">*</span></label>
+                        <input type="number" name="booking_interval_minutes" value="20" min="5" required class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <label class="text-sm inline-flex gap-2"><input type="checkbox" name="is_active" checked> Activo</label>
+                    <button class="w-full bg-emerald-600 text-white py-2 rounded">Crear servicio</button>
+                </form>
+            </article>
+        </aside>
+
+        <main class="xl:col-span-3 space-y-4">
+            {% if selected_service %}
+                <article class="bg-white border rounded-2xl p-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <h2 class="text-lg font-bold">Editar: {{ selected_service.name }}</h2>
+                        <form method="post" action="{% url 'service_manager_delete_service' selected_service.id %}" onsubmit="return confirm('¿Eliminar servicio, horarios, excepciones y paquetes?');">
+                            {% csrf_token %}
+                            <button class="bg-rose-600 text-white px-3 py-2 rounded text-sm">Eliminar servicio</button>
+                        </form>
+                    </div>
+                    <form method="post" action="{% url 'service_manager_update_service' selected_service.id %}" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3" data-service-form>
+                        {% csrf_token %}
+                        <div>
+                            <label class="text-xs font-semibold uppercase text-slate-600">Nombre <span class="text-rose-600">*</span></label>
+                            <input name="name" value="{{ selected_service.name }}" required class="w-full border rounded p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase text-slate-600">Identificador URL</label>
+                            <input value="{{ selected_service.slug }}" readonly class="w-full border rounded p-2 text-sm bg-slate-100 text-slate-600">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase text-slate-600">Código interno</label>
+                            <input value="{{ selected_service.internal_code|default:'Se genera automáticamente' }}" readonly class="w-full border rounded p-2 text-sm bg-slate-100 text-slate-600">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase text-slate-600">Categoría</label>
+                            <input name="category" value="{{ selected_service.category }}" class="w-full border rounded p-2 text-sm">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-xs font-semibold uppercase text-slate-600">Descripción</label>
+                            <textarea name="description" rows="2" placeholder="Describe el servicio para el cliente" class="w-full border rounded p-2 text-sm">{{ selected_service.description }}</textarea>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase text-slate-600">URL de cotización</label>
+                            <input name="quote_url" value="{{ selected_service.quote_url }}" placeholder="https://..." class="w-full border rounded p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase text-slate-600">Tipo de disponibilidad <span class="text-rose-600">*</span></label>
+                            <select name="availability_type" class="w-full border rounded p-2 text-sm" data-availability-select>
+                                {% for value,label in availability_choices %}
+                                    <option value="{{ value }}" {% if selected_service.availability_type == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-2 {% if selected_service.availability_type == 'temporary' %}{% else %}hidden{% endif %}" data-temporary-range>
+                            <div>
+                                <label class="text-xs font-semibold uppercase text-slate-600">Disponible desde <span class="text-rose-600">*</span></label>
+                                <input type="date" name="available_from" value="{{ selected_service.available_from|date:'Y-m-d' }}" class="w-full border rounded p-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold uppercase text-slate-600">Disponible hasta <span class="text-rose-600">*</span></label>
+                                <input type="date" name="available_until" value="{{ selected_service.available_until|date:'Y-m-d' }}" class="w-full border rounded p-2 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase text-slate-600">Duración base de cita (min) <span class="text-rose-600">*</span></label>
+                            <input type="number" name="default_duration_minutes" value="{{ selected_service.default_duration_minutes }}" min="1" required class="w-full border rounded p-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase text-slate-600">Intervalo entre horarios (min) <span class="text-rose-600">*</span></label>
+                            <input type="number" name="booking_interval_minutes" value="{{ selected_service.booking_interval_minutes }}" min="5" required class="w-full border rounded p-2 text-sm">
+                        </div>
+                        <div class="md:col-span-2 flex items-center justify-between">
+                            <label class="text-sm inline-flex gap-2"><input type="checkbox" name="is_active" {% if selected_service.is_active %}checked{% endif %}> Activo</label>
+                            <button class="bg-slate-900 text-white px-4 py-2 rounded text-sm">Guardar servicio</button>
+                        </div>
+                    </form>
+                </article>
+
+                <article class="bg-white border rounded-2xl p-4 space-y-3">
+                    <h3 class="font-bold">Disponibilidad semanal</h3>
+                    {% if overlap_warnings %}
+                        <div class="bg-amber-50 border border-amber-200 rounded p-3 text-amber-700 text-sm">
+                            <p class="font-semibold mb-1">Advertencias de solapamiento</p>
+                            <ul class="list-disc pl-4">{% for warning in overlap_warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+                        </div>
+                    {% endif %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm border rounded">
+                            <thead class="bg-slate-800 text-white"><tr><th class="px-3 py-2 text-left">Día</th><th class="px-3 py-2 text-left">Etiqueta</th><th class="px-3 py-2 text-left">Inicio</th><th class="px-3 py-2 text-left">Fin</th><th class="px-3 py-2"></th></tr></thead>
+                            <tbody>
+                                {% for item in selected_service.weekly_ranges.all %}
+                                    <tr class="border-t">
+                                        <td colspan="5" class="px-3 py-2">
+                                            <form method="post" action="{% url 'service_manager_update_weekly_range' item.id %}" class="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
+                                                {% csrf_token %}
+                                                <div><label class="text-[11px] text-slate-500">Día</label><select name="weekday" class="w-full border rounded p-2 text-sm">{% for value,label in weekday_choices %}<option value="{{ value }}" {% if item.weekday == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+                                                <div><label class="text-[11px] text-slate-500">Etiqueta</label><input name="label" value="{{ item.label }}" class="w-full border rounded p-2 text-sm" placeholder="Ejemplo: Turno matutino"></div>
+                                                <div><label class="text-[11px] text-slate-500">Inicio</label><input type="time" name="start_time" value="{{ item.start_time|time:'H:i' }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div><label class="text-[11px] text-slate-500">Fin</label><input type="time" name="end_time" value="{{ item.end_time|time:'H:i' }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div><button class="w-full bg-slate-900 text-white rounded p-2 text-sm">Guardar</button></div>
+                                                <div class="text-right"><button class="text-rose-700 text-sm" type="submit" formaction="{% url 'service_manager_delete_weekly_range' item.id %}" onclick="return confirm('¿Eliminar bloque horario?');">Eliminar</button></div>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="5" class="px-3 py-3 text-slate-500">Sin bloques configurados.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <form method="post" action="{% url 'service_manager_create_weekly_range' selected_service.id %}" class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        {% csrf_token %}
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Día <span class="text-rose-600">*</span></label><select name="weekday" class="w-full border rounded p-2 text-sm">{% for value,label in weekday_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Etiqueta</label><input name="label" class="w-full border rounded p-2 text-sm" placeholder="Ejemplo: Vespertino"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Inicio <span class="text-rose-600">*</span></label><input type="time" name="start_time" required class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Fin <span class="text-rose-600">*</span></label><input type="time" name="end_time" required class="w-full border rounded p-2 text-sm"></div>
+                        <div class="md:col-span-4 text-right"><button class="bg-emerald-600 text-white px-4 py-2 rounded text-sm">Agregar bloque</button></div>
+                    </form>
+                </article>
+
+                <article class="bg-white border rounded-2xl p-4 space-y-3">
+                    <h3 class="font-bold">Excepciones por fecha</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm border rounded">
+                            <thead class="bg-slate-800 text-white"><tr><th class="px-3 py-2 text-left">Fecha</th><th class="px-3 py-2 text-left">Tipo</th><th class="px-3 py-2 text-left">Horario</th><th class="px-3 py-2 text-left">Límite</th><th class="px-3 py-2"></th></tr></thead>
+                            <tbody>
+                            {% for item in selected_service.exceptions.all %}
+                                <tr class="border-t">
+                                    <td colspan="5" class="px-3 py-2">
+                                        <form method="post" action="{% url 'service_manager_update_exception' item.id %}" class="grid grid-cols-1 md:grid-cols-7 gap-2 items-end">
+                                            {% csrf_token %}
+                                            <div><label class="text-[11px] text-slate-500">Fecha</label><input type="date" name="date" value="{{ item.date|date:'Y-m-d' }}" class="w-full border rounded p-2 text-sm"></div>
+                                            <div><label class="text-[11px] text-slate-500">Tipo</label><select name="exception_type" class="w-full border rounded p-2 text-sm">{% for value,label in exception_type_choices %}<option value="{{ value }}" {% if item.exception_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+                                            <div><label class="text-[11px] text-slate-500">Modo</label><select name="range_mode" class="w-full border rounded p-2 text-sm">{% for value,label in exception_range_mode_choices %}<option value="{{ value }}" {% if item.range_mode == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+                                            <div><label class="text-[11px] text-slate-500">Inicio</label><input type="time" name="start_time" value="{{ item.start_time|time:'H:i' }}" class="w-full border rounded p-2 text-sm"></div>
+                                            <div><label class="text-[11px] text-slate-500">Fin</label><input type="time" name="end_time" value="{{ item.end_time|time:'H:i' }}" class="w-full border rounded p-2 text-sm"></div>
+                                            <div><label class="text-[11px] text-slate-500">Máx.</label><input type="number" name="max_bookings" value="{{ item.max_bookings }}" class="w-full border rounded p-2 text-sm"></div>
+                                            <div class="flex gap-2"><button class="flex-1 bg-slate-900 text-white rounded p-2 text-sm">Guardar</button><button class="text-rose-700 text-sm" type="submit" formaction="{% url 'service_manager_delete_exception' item.id %}" onclick="return confirm('¿Eliminar excepción?');">Eliminar</button></div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="5" class="px-3 py-3 text-slate-500">Sin excepciones.</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <form method="post" action="{% url 'service_manager_create_exception' selected_service.id %}" class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        {% csrf_token %}
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Fecha <span class="text-rose-600">*</span></label><input type="date" name="date" required class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Tipo <span class="text-rose-600">*</span></label><select name="exception_type" class="w-full border rounded p-2 text-sm">{% for value,label in exception_type_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Modo de rango</label><select name="range_mode" class="w-full border rounded p-2 text-sm">{% for value,label in exception_range_mode_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Hora inicio</label><input type="time" name="start_time" class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Hora fin</label><input type="time" name="end_time" class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Máx. eventos</label><input type="number" name="max_bookings" class="w-full border rounded p-2 text-sm"></div>
+                        <div class="md:col-span-3"><label class="text-xs font-semibold uppercase text-slate-600">Notas</label><input name="notes" class="w-full border rounded p-2 text-sm"></div>
+                        <div class="md:col-span-3 text-right"><button class="bg-emerald-600 text-white px-4 py-2 rounded text-sm">Agregar excepción</button></div>
+                    </form>
+                </article>
+
+                <article class="bg-white border rounded-2xl p-4 space-y-3">
+                    <h3 class="font-bold">Paquetes</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm border rounded">
+                            <thead class="bg-slate-800 text-white"><tr><th class="px-3 py-2 text-left">Nombre</th><th class="px-3 py-2 text-left">Precio</th><th class="px-3 py-2 text-left">Anticipo</th><th class="px-3 py-2 text-left">Duración</th><th class="px-3 py-2"></th></tr></thead>
+                            <tbody>
+                                {% for item in selected_service.packages.all %}
+                                    <tr class="border-t">
+                                        <td colspan="5" class="px-3 py-2">
+                                            <form method="post" action="{% url 'service_manager_update_package' item.id %}" class="grid grid-cols-1 md:grid-cols-8 gap-2 items-end">
+                                                {% csrf_token %}
+                                                <div><label class="text-[11px] text-slate-500">Nombre <span class="text-rose-600">*</span></label><input name="name" value="{{ item.name }}" required class="w-full border rounded p-2 text-sm"></div>
+                                                <div><label class="text-[11px] text-slate-500">Precio <span class="text-rose-600">*</span></label><input type="number" step="0.01" min="0" name="price" value="{{ item.price }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div><label class="text-[11px] text-slate-500">Anticipo</label><input type="number" step="0.01" min="0" name="deposit_required" value="{{ item.deposit_required }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div><label class="text-[11px] text-slate-500">Duración (min)</label><input type="number" min="1" name="duration_minutes" value="{{ item.duration_minutes }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div><label class="text-[11px] text-slate-500">Desde</label><input type="date" name="available_from" value="{{ item.available_from|date:'Y-m-d' }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div><label class="text-[11px] text-slate-500">Hasta</label><input type="date" name="available_until" value="{{ item.available_until|date:'Y-m-d' }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div><label class="text-[11px] text-slate-500">Máx. reservas</label><input type="number" min="1" name="max_bookings" value="{{ item.max_bookings }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div class="space-y-1">
+                                                    <label class="text-xs inline-flex gap-1"><input type="checkbox" name="is_default" {% if item.is_default %}checked{% endif %}> Pred.</label>
+                                                    <label class="text-xs inline-flex gap-1"><input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}> Activo</label>
+                                                </div>
+                                                <div class="md:col-span-7"><label class="text-[11px] text-slate-500">Descripción</label><input name="description" value="{{ item.description }}" class="w-full border rounded p-2 text-sm"></div>
+                                                <div class="flex gap-2"><button class="flex-1 bg-slate-900 text-white rounded p-2 text-sm">Guardar</button><button class="text-rose-700 text-sm" type="submit" formaction="{% url 'service_manager_delete_package' item.id %}" onclick="return confirm('¿Eliminar paquete?');">Eliminar</button></div>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="5" class="px-3 py-3 text-slate-500">Sin paquetes.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <form method="post" action="{% url 'service_manager_create_package' selected_service.id %}" class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        {% csrf_token %}
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Nombre <span class="text-rose-600">*</span></label><input name="name" required class="w-full border rounded p-2 text-sm" placeholder="Ejemplo: Paquete Base"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Precio <span class="text-rose-600">*</span></label><input type="number" step="0.01" min="0" name="price" required class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Anticipo</label><input type="number" step="0.01" min="0" name="deposit_required" value="0" class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Duración (min)</label><input type="number" min="1" name="duration_minutes" class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Disponible desde</label><input type="date" name="available_from" class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Disponible hasta</label><input type="date" name="available_until" class="w-full border rounded p-2 text-sm"></div>
+                        <div><label class="text-xs font-semibold uppercase text-slate-600">Máx. reservas</label><input type="number" min="1" name="max_bookings" class="w-full border rounded p-2 text-sm"></div>
+                        <div class="flex items-center gap-4"><label class="text-sm inline-flex gap-2"><input type="checkbox" name="is_default"> Predeterminado</label><label class="text-sm inline-flex gap-2"><input type="checkbox" name="is_active" checked> Activo</label></div>
+                        <div class="md:col-span-3"><label class="text-xs font-semibold uppercase text-slate-600">Descripción</label><input name="description" class="w-full border rounded p-2 text-sm"></div>
+                        <div class="md:col-span-3 text-right"><button class="bg-emerald-600 text-white px-4 py-2 rounded text-sm">Agregar paquete</button></div>
+                    </form>
+                </article>
+            {% else %}
+                <article class="bg-white border rounded-2xl p-4 text-slate-600">Crea tu primer servicio para comenzar.</article>
+            {% endif %}
+        </main>
+    </section>
+</div>
+
+<script>
+function toggleServiceDateRange(form) {
+    const select = form.querySelector("[data-availability-select]");
+    const range = form.querySelector("[data-temporary-range]");
+    if (!select || !range) return;
+    const isTemporary = select.value === "temporary";
+    range.classList.toggle("hidden", !isTemporary);
+    range.querySelectorAll("input[type='date']").forEach((input) => {
+        input.required = isTemporary;
+        if (!isTemporary) {
+            input.value = "";
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-service-form]").forEach((form) => {
+        const select = form.querySelector("[data-availability-select]");
+        toggleServiceDateRange(form);
+        select?.addEventListener("change", () => toggleServiceDateRange(form));
+    });
+});
+</script>
+</body>
+</html>

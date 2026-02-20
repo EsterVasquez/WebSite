@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva cita manual</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow p-4 md:p-8 space-y-6">
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+                <p class="text-xs uppercase tracking-widest text-slate-500">Jonathan CA Photography</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Crear Cita Manual</h1>
+                <p class="text-sm text-slate-500">Registra una cita sin pasar por WhatsApp.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">Volver al panel</a>
+                <a href="/calendario-panel/" class="bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm">Ver calendario</a>
+            </div>
+        </header>
+
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <article class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Servicio <span class="text-rose-600">*</span></label>
+                    <select id="serviceSelect" class="w-full border rounded-lg p-3" required></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Paquete</label>
+                    <select id="packageSelect" class="w-full border rounded-lg p-3">
+                        <option value="">Sin paquete</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Fecha <span class="text-rose-600">*</span></label>
+                        <input id="dateInput" type="date" class="w-full border rounded-lg p-3" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Hora <span class="text-rose-600">*</span></label>
+                        <select id="timeSelect" class="w-full border rounded-lg p-3" required>
+                            <option value="">Selecciona una hora</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Estado inicial <span class="text-rose-600">*</span></label>
+                    <select id="statusSelect" class="w-full border rounded-lg p-3" required>
+                        {% for value,label in booking_statuses %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </article>
+
+            <article class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Nombre del cliente <span class="text-rose-600">*</span></label>
+                    <input id="customerName" type="text" class="w-full border rounded-lg p-3" placeholder="Nombre y apellido" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Teléfono del cliente <span class="text-rose-600">*</span></label>
+                    <input id="customerPhone" type="text" class="w-full border rounded-lg p-3" placeholder="Ejemplo: 5215512345678" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Anticipo registrado</label>
+                    <input id="depositInput" type="number" min="0" step="0.01" class="w-full border rounded-lg p-3" value="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Notas (opcional)</label>
+                    <textarea id="notesInput" rows="4" class="w-full border rounded-lg p-3" placeholder="Información adicional de la cita"></textarea>
+                </div>
+            </article>
+        </section>
+
+        <section class="rounded-xl border bg-slate-50 p-4">
+            <p class="text-sm text-slate-500">Horarios disponibles para la fecha seleccionada</p>
+            <div id="timeButtons" class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+                <p class="text-sm text-slate-500 col-span-full">Selecciona servicio y fecha.</p>
+            </div>
+        </section>
+
+        <footer class="pt-2 border-t flex flex-col md:flex-row items-center justify-between gap-3">
+            <p id="manualFeedback" class="text-sm text-slate-500"></p>
+            <button id="createBookingBtn" class="bg-emerald-600 text-white px-6 py-3 rounded-lg">Crear cita</button>
+        </footer>
+    </div>
+
+    <script src="{% static 'js/manual_booking.js' %}"></script>
+</body>
+</html>

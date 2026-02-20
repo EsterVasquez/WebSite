@@ -1,19 +1,14 @@
 from dataclasses import dataclass
 
 from app.models import Message, User
+from app.services.bot_flow_service import route_with_flow_nodes
 from app.services.booking_service import create_booking_intent
-from app.services.catalog_service import get_service_by_payload
-from app.whatsapp.constants import CATEGORY_TO_SERVICES, DELIVERY_MESSAGE, PIXIESET_DEFAULT_LINK
+from app.services.catalog_service import get_service_by_code
+from app.whatsapp.constants import PIXIESET_DEFAULT_LINK
 from app.whatsapp.payloads import (
     booking_payload,
-    delivery_payload,
-    doubts_payload,
-    first_message_payloads,
     quote_payload,
-    service_categories_payload,
-    services_for_category_payload,
     text_message,
-    unknown_message_payload,
 )
 
 
@@ -49,18 +44,7 @@ def _extract_message_selection(message: dict) -> tuple[str, str | None]:
 
 def _normalize_key(raw_key: str) -> str:
     key = (raw_key or "").strip()
-    low = key.lower()
-
-    text_aliases = {
-        "hola": "Hola",
-        "agendar": "Agendar",
-        "cotizar": "Cotizar",
-        "entrega": "Entrega",
-        "dudas": "Dudas",
-        "dudas/otro": "Dudas",
-        "sesiones tematicas": "Sesiones Tematicas",
-    }
-    return text_aliases.get(low, key)
+    return key
 
 
 def _get_or_create_user(sender: str, sender_name: str | None) -> User:
@@ -84,27 +68,27 @@ def _save_incoming_message(
         content=content or "",
         direction=Message.Direction.INCOMING,
         message_type=message_type or "unknown",
-        payload_id=payload_id,
+        payload_id=payload_id or "",
         raw_payload=raw_payload,
     )
 
 
 def _handle_service_selection(sender: str, user: User, payload_id: str, base_url: str) -> list[dict]:
-    service = get_service_by_payload(payload_id)
+    service = get_service_by_code(payload_id)
     if service is None:
-        return [text_message(sender, "El servicio seleccionado no está configurado todavía.")]
+        return [text_message(sender, "El servicio seleccionado no esta configurado.")]
 
-    if user.conversation_state == User.ConversationState.COTIZAR:
-        link = service.link or PIXIESET_DEFAULT_LINK
+    if user.conversation_state == User.ConversationState.QUOTE:
+        link = service.quote_url or PIXIESET_DEFAULT_LINK
         return quote_payload(sender, service.name, link)
 
-    if user.conversation_state == User.ConversationState.AGENDAR:
-        create_booking_intent(user=user, service=service, payload_id=payload_id)
+    if user.conversation_state == User.ConversationState.BOOKING:
+        create_booking_intent(user=user, service=service, source_option_key=payload_id)
         booking_url = f"{base_url.rstrip('/')}/calendario/{user.booking_token}/"
         payloads = booking_payload(
             sender=sender,
             service_name=service.name,
-            service_description=service.description or "Sesión fotográfica personalizada.",
+            service_description=service.description or "Servicio fotografico personalizado.",
             booking_url=booking_url,
         )
         payloads.append(text_message(sender, booking_url))
@@ -113,9 +97,9 @@ def _handle_service_selection(sender: str, user: User, payload_id: str, base_url
     return [
         text_message(
             sender,
-            "Primero elige si deseas cotizar o agendar, para ayudarte con el flujo correcto.",
+            "Primero elige si deseas cotizar o agendar para ayudarte con el flujo correcto.",
         )
-    ] + first_message_payloads(sender)
+    ]
 
 
 def route_incoming_whatsapp_event(data: dict, base_url: str) -> IncomingRoutingResult | None:
@@ -140,62 +124,17 @@ def route_incoming_whatsapp_event(data: dict, base_url: str) -> IncomingRoutingR
         user=user,
         message_type=message_type,
         content=raw_key,
-        payload_id=selected_key if selected_key.startswith("Service_") else None,
+        payload_id=selected_key,
         raw_payload=message,
     )
 
-    if selected_key == "Hola":
-        user.conversation_state = User.ConversationState.IDLE
-        user.save(update_fields=["conversation_state", "updated_at"])
+    node_payloads = route_with_flow_nodes(sender=sender, selected_key=selected_key, user=user, base_url=base_url)
+    if node_payloads is not None:
         return IncomingRoutingResult(
             sender=sender,
             selected_key=selected_key,
             user=user,
-            payloads=first_message_payloads(sender),
-        )
-
-    if selected_key == "Agendar":
-        user.conversation_state = User.ConversationState.AGENDAR
-        user.save(update_fields=["conversation_state", "updated_at"])
-        return IncomingRoutingResult(
-            sender=sender,
-            selected_key=selected_key,
-            user=user,
-            payloads=service_categories_payload(sender),
-        )
-
-    if selected_key == "Cotizar":
-        user.conversation_state = User.ConversationState.COTIZAR
-        user.save(update_fields=["conversation_state", "updated_at"])
-        return IncomingRoutingResult(
-            sender=sender,
-            selected_key=selected_key,
-            user=user,
-            payloads=service_categories_payload(sender),
-        )
-
-    if selected_key == "Entrega":
-        return IncomingRoutingResult(
-            sender=sender,
-            selected_key=selected_key,
-            user=user,
-            payloads=delivery_payload(sender),
-        )
-
-    if selected_key == "Dudas":
-        return IncomingRoutingResult(
-            sender=sender,
-            selected_key=selected_key,
-            user=user,
-            payloads=doubts_payload(sender),
-        )
-
-    if selected_key in CATEGORY_TO_SERVICES:
-        return IncomingRoutingResult(
-            sender=sender,
-            selected_key=selected_key,
-            user=user,
-            payloads=services_for_category_payload(sender, selected_key),
+            payloads=node_payloads,
         )
 
     if selected_key.startswith("Service_"):
@@ -211,25 +150,25 @@ def route_incoming_whatsapp_event(data: dict, base_url: str) -> IncomingRoutingR
             ),
         )
 
-    if selected_key == "Contratar":
+    fallback_payloads = route_with_flow_nodes(
+        sender=sender,
+        selected_key="inicio",
+        user=user,
+        base_url=base_url,
+    )
+    if fallback_payloads:
+        payloads = [text_message(sender, "No identifique tu respuesta, te comparto el menu principal.")]
+        payloads.extend(fallback_payloads)
         return IncomingRoutingResult(
             sender=sender,
             selected_key=selected_key,
             user=user,
-            payloads=[
-                text_message(
-                    sender,
-                    (
-                        "Perfecto. Un miembro del equipo te contactará para cerrar la contratación. "
-                        f"{DELIVERY_MESSAGE}"
-                    ),
-                )
-            ],
+            payloads=payloads,
         )
 
     return IncomingRoutingResult(
         sender=sender,
         selected_key=selected_key,
         user=user,
-        payloads=unknown_message_payload(sender),
+        payloads=[text_message(sender, "No identifique tu respuesta.")],
     )

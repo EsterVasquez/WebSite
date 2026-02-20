@@ -26,26 +26,35 @@
                     <p id="serviceName" class="font-semibold text-slate-800">{{ service_name }}</p>
                 </article>
                 <article class="rounded-xl border bg-slate-50 p-3">
-                    <p class="text-xs uppercase text-slate-500">Tier actual</p>
-                    <p id="tierName" class="font-semibold text-slate-800">{{ tier_name }}</p>
+                    <p class="text-xs uppercase text-slate-500">Paquete actual</p>
+                    <p id="packageName" class="font-semibold text-slate-800">{{ package_name }}</p>
                 </article>
                 <article class="rounded-xl border bg-slate-50 p-3">
                     <p class="text-xs uppercase text-slate-500">Duración</p>
-                    <p id="tierDuration" class="font-semibold text-slate-800">{{ tier_duration }} min</p>
+                    <p id="packageDuration" class="font-semibold text-slate-800">{{ package_duration }} min</p>
                 </article>
                 <article class="rounded-xl border bg-slate-50 p-3">
                     <p class="text-xs uppercase text-slate-500">Precio</p>
-                    <p id="tierPrice" class="font-semibold text-slate-800">$ {{ tier_price }}</p>
+                    <p id="packagePrice" class="font-semibold text-slate-800">$ {{ package_price }}</p>
                 </article>
             </section>
 
             <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="space-y-3">
-                    <label for="tierSelect" class="block text-sm font-medium text-slate-700">Paquete</label>
-                    <select id="tierSelect" class="w-full border rounded-lg p-3"></select>
+                    <label for="packageSelect" class="block text-sm font-medium text-slate-700">Paquete <span class="text-rose-600">*</span></label>
+                    <select id="packageSelect" class="w-full border rounded-lg p-3" required></select>
 
-                    <label for="datePicker" class="block text-sm font-medium text-slate-700">Fecha</label>
-                    <input id="datePicker" type="date" class="w-full border rounded-lg p-3">
+                    <label for="datePicker" class="block text-sm font-medium text-slate-700">Fecha <span class="text-rose-600">*</span></label>
+                    <input id="datePicker" type="date" class="w-full border rounded-lg p-3" required>
+
+                    <label for="customerName" class="block text-sm font-medium text-slate-700">Tu nombre <span class="text-rose-600">*</span></label>
+                    <input id="customerName" type="text" class="w-full border rounded-lg p-3" placeholder="Nombre y apellido" required>
+
+                    <label for="customerPhone" class="block text-sm font-medium text-slate-700">Tu teléfono <span class="text-rose-600">*</span></label>
+                    <input id="customerPhone" type="text" class="w-full border rounded-lg p-3" placeholder="Ejemplo: 5215512345678" required>
+
+                    <label for="customerNotes" class="block text-sm font-medium text-slate-700">Notas (opcional)</label>
+                    <textarea id="customerNotes" rows="3" class="w-full border rounded-lg p-3" placeholder="Indicaciones adicionales para tu cita"></textarea>
                 </div>
 
                 <div class="space-y-3">

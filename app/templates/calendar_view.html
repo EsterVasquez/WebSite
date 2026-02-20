@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Citas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <style>
+        .fc .fc-toolbar.fc-header-toolbar {
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .fc .fc-toolbar-title {
+            font-size: 1.1rem;
+        }
+        @media (min-width: 768px) {
+            .fc .fc-toolbar-title {
+                font-size: 1.35rem;
+            }
+        }
+        .fc .fc-daygrid-day-number,
+        .fc .fc-col-header-cell-cushion {
+            color: #0f172a;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow p-4 md:p-8 space-y-4">
+        <header class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <p class="text-xs uppercase tracking-widest text-slate-500">Jonathan CA Photography</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Calendario de Citas</h1>
+                <p class="text-sm text-slate-500">Navega por día, semana y mes para ver el detalle de cada cita.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">Volver al panel</a>
+                <a href="/citas/nueva/" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm">Nueva cita manual</a>
+                <button id="reloadCalendarBtn" class="bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm">Recargar</button>
+            </div>
+        </header>
+
+        <section id="calendarContainer" class="rounded-xl border border-slate-200 p-2 md:p-4 bg-white"></section>
+        <p id="calendarFeedback" class="text-sm text-slate-500"></p>
+    </div>
+
+    <script src="{% static 'js/calendar_view.js' %}"></script>
+</body>
+</html>

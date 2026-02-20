@@ -1,27 +1,32 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Reservaciones</title>
+    <title>Panel de Citas</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen p-4 md:p-8">
-    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow p-6 md:p-8 space-y-6">
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow p-4 md:p-8 space-y-6">
+        <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
                 <p class="text-xs uppercase tracking-widest text-slate-500">Jonathan CA Photography</p>
-                <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Dashboard de Reservaciones</h1>
-                <p class="text-slate-500 text-sm">Datos reales desde PostgreSQL</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Panel de Citas</h1>
+                <p class="text-slate-500 text-sm">Gestión de citas, estados y seguimiento de anticipos.</p>
             </div>
-            <button id="refreshBtn" class="bg-slate-800 text-white px-4 py-2 rounded-lg">
-                Actualizar
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="/bot-manager/" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">Editor del bot</a>
+                <a href="/servicios-manager/" class="bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm">Servicios y eventos</a>
+                <a href="/calendario-panel/" class="bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm">Vista calendario</a>
+                <a href="/citas/nueva/" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm">Nueva cita manual</a>
+                <button id="refreshBtn" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">Actualizar</button>
+            </div>
         </header>
 
-        <section class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             <article class="rounded-xl border bg-slate-50 p-3">
-                <p class="text-xs uppercase text-slate-500">Total reservaciones</p>
+                <p class="text-xs uppercase text-slate-500">Total de citas</p>
                 <p id="statTotal" class="text-2xl font-bold text-slate-800">0</p>
             </article>
             <article class="rounded-xl border bg-slate-50 p-3">
@@ -38,23 +43,26 @@
             </article>
         </section>
 
-        <section class="overflow-x-auto">
-            <table class="min-w-full border rounded-xl overflow-hidden">
+        <section class="overflow-x-auto rounded-xl border">
+            <table class="min-w-full">
                 <thead class="bg-slate-800 text-white text-left text-sm">
                     <tr>
-                        <th class="px-4 py-3">Usuario</th>
+                        <th class="px-4 py-3">Cliente</th>
                         <th class="px-4 py-3">Teléfono</th>
                         <th class="px-4 py-3">Servicio</th>
-                        <th class="px-4 py-3">Tier</th>
+                        <th class="px-4 py-3">Paquete</th>
                         <th class="px-4 py-3">Fecha</th>
                         <th class="px-4 py-3">Hora</th>
+                        <th class="px-4 py-3">Precio</th>
+                        <th class="px-4 py-3">Anticipo</th>
                         <th class="px-4 py-3">Estado</th>
                         <th class="px-4 py-3">Origen</th>
+                        <th class="px-4 py-3">Gestión</th>
                     </tr>
                 </thead>
                 <tbody id="bookingsTbody" class="bg-white text-sm">
                     <tr>
-                        <td colspan="8" class="px-4 py-6 text-center text-slate-500">Cargando reservaciones...</td>
+                        <td colspan="11" class="px-4 py-6 text-center text-slate-500">Cargando citas...</td>
                     </tr>
                 </tbody>
             </table>
@@ -63,6 +71,6 @@
         <p id="dashboardFeedback" class="text-sm text-slate-500"></p>
     </div>
 
-    <script src="/static/js/calendar.js"></script>
+    <script src="{% static 'js/calendar.js' %}?v=20260219-1"></script>
 </body>
 </html>

@@ -3,17 +3,18 @@ from django.contrib import admin
 from app.models import (
     Booking,
     BookingIntent,
-    BotResponse,
-    Day,
-    Feriado,
+    BotFlow,
+    BotFlowNode,
+    BotFlowOption,
     Message,
     Service,
-    ServiceTier,
-    TimeBlock,
+    ServiceException,
+    ServicePackage,
+    ServiceWeeklyRange,
     User,
 )
 
-# Register your models here.
+
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ("phone_number", "name", "conversation_state", "booking_token")
@@ -23,56 +24,67 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ("user", "direction", "message_type", "payload_id", "timestamp")
+    list_display = ("user", "direction", "message_type", "payload_id", "created_at")
     search_fields = ("user__phone_number", "content", "payload_id")
     list_filter = ("direction", "message_type")
 
 
-@admin.register(BotResponse)
-class BotResponseAdmin(admin.ModelAdmin):
-    list_display = ("user", "timestamp")
-    search_fields = ("user__phone_number", "response")
+class ServiceWeeklyRangeInline(admin.TabularInline):
+    model = ServiceWeeklyRange
+    extra = 0
+
+
+class ServiceExceptionInline(admin.TabularInline):
+    model = ServiceException
+    extra = 0
+
+
+class ServicePackageInline(admin.TabularInline):
+    model = ServicePackage
+    extra = 0
 
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ("name", "payload_id", "category", "available_from", "available_until", "is_active")
-    search_fields = ("name", "payload_id", "category")
-    list_filter = ("category", "is_active")
-
-
-@admin.register(ServiceTier)
-class ServiceTierAdmin(admin.ModelAdmin):
-    list_display = ("service", "name", "price", "duration_minutes", "is_default")
-    search_fields = ("service__name", "name")
-    list_filter = ("is_default",)
+    list_display = ("name", "category", "availability_type", "is_active")
+    search_fields = ("name", "category", "internal_code")
+    list_filter = ("availability_type", "is_active")
+    inlines = [ServiceWeeklyRangeInline, ServiceExceptionInline, ServicePackageInline]
 
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ("user", "service_tier", "date", "time", "status", "source")
-    search_fields = ("user__phone_number", "user__name", "service_tier__service__name")
+    list_display = ("service", "package", "customer_name", "customer_phone", "date", "time", "status", "source")
+    search_fields = ("customer_name", "customer_phone", "service__name", "user__phone_number")
     list_filter = ("status", "source", "date")
 
 
 @admin.register(BookingIntent)
 class BookingIntentAdmin(admin.ModelAdmin):
-    list_display = ("user", "service", "selected_tier", "status", "created_at")
-    search_fields = ("user__phone_number", "service__name", "source_payload_id")
+    list_display = ("user", "service", "selected_package", "status", "created_at")
+    search_fields = ("user__phone_number", "service__name", "source_option_key")
     list_filter = ("status", "service__category")
 
 
-@admin.register(TimeBlock)
-class TimeBlockAdmin(admin.ModelAdmin):
-    list_display = ("service", "day", "name", "start_time", "end_time")
-    list_filter = ("day", "service")
+class BotFlowOptionInline(admin.TabularInline):
+    model = BotFlowOption
+    fk_name = "node"
+    extra = 0
+    fields = ("order_index", "title", "trigger_key", "action_type", "next_node", "service", "is_active")
+    readonly_fields = ("trigger_key",)
 
 
-@admin.register(Day)
-class DayAdmin(admin.ModelAdmin):
-    list_display = ("day",)
+@admin.register(BotFlowNode)
+class BotFlowNodeAdmin(admin.ModelAdmin):
+    list_display = ("flow", "title", "key", "interaction_type", "is_start", "is_terminal", "is_active")
+    search_fields = ("title", "key", "flow__name")
+    list_filter = ("interaction_type", "is_start", "is_terminal", "is_active")
+    inlines = [BotFlowOptionInline]
+    readonly_fields = ("key",)
 
 
-@admin.register(Feriado)
-class FeriadoAdmin(admin.ModelAdmin):
-    list_display = ("fecha",)
+@admin.register(BotFlow)
+class BotFlowAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "is_active", "is_published", "updated_at")
+    search_fields = ("name", "slug")
+    list_filter = ("is_active", "is_published")
