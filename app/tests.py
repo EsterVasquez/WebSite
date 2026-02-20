@@ -7,6 +7,7 @@ from django.utils import timezone
 from app.models import Booking, Service, ServicePackage, ServiceWeeklyRange, User
 from app.services.bot_flow_service import ensure_default_bot_flow_seeded
 from app.services.booking_service import confirm_booking, create_booking_intent, get_available_times
+from app.services.chat_service import mark_chat_needs_attention, mark_chat_resolved
 from app.whatsapp.flow import route_incoming_whatsapp_event
 
 
@@ -131,3 +132,37 @@ class BotFlowNodeTests(TestCase):
         self.assertIsNotNone(agendar_result)
         self.assertTrue(agendar_result.payloads)
         self.assertEqual(agendar_result.payloads[0]["type"], "interactive")
+
+    def test_bot_is_temporarily_paused_during_human_chat(self):
+        ensure_default_bot_flow_seeded()
+        phone = "5215512345678"
+
+        hello_payload = {
+            "entry": [
+                {
+                    "changes": [
+                        {
+                            "value": {
+                                "messages": [{"from": phone, "type": "text", "text": {"body": "Hola"}}],
+                                "contacts": [{"profile": {"name": "Cliente Chat"}}],
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+        first_result = route_incoming_whatsapp_event(data=hello_payload, base_url="http://localhost:8000")
+        self.assertIsNotNone(first_result)
+        self.assertTrue(first_result.payloads)
+
+        user = User.objects.get(phone_number=phone)
+        mark_chat_needs_attention(user)
+
+        paused_result = route_incoming_whatsapp_event(data=hello_payload, base_url="http://localhost:8000")
+        self.assertIsNotNone(paused_result)
+        self.assertEqual(paused_result.payloads, [])
+
+        mark_chat_resolved(user)
+        resumed_result = route_incoming_whatsapp_event(data=hello_payload, base_url="http://localhost:8000")
+        self.assertIsNotNone(resumed_result)
+        self.assertTrue(resumed_result.payloads)

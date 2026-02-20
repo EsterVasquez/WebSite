@@ -133,6 +133,22 @@ INSTALLED_APPS = [
     'app',
 ]
 
+try:
+    import daphne  # type: ignore  # noqa: F401
+except ImportError:
+    DAPHNE_ENABLED = False
+else:
+    DAPHNE_ENABLED = True
+    INSTALLED_APPS.insert(0, "daphne")
+
+try:
+    import channels  # type: ignore  # noqa: F401
+except ImportError:
+    CHANNELS_ENABLED = False
+else:
+    CHANNELS_ENABLED = True
+    INSTALLED_APPS.append("channels")
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -161,6 +177,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+if CHANNELS_ENABLED:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
 
 
 # Database

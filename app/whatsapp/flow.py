@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
 from app.models import Message, User
+from app.services.chat_service import (
+    is_chat_handover_active,
+    mark_chat_needs_attention,
+    register_user_message,
+)
 from app.services.bot_flow_service import route_with_flow_nodes
 from app.services.booking_service import create_booking_intent
 from app.services.catalog_service import get_service_by_code
@@ -67,10 +72,12 @@ def _save_incoming_message(
         user=user,
         content=content or "",
         direction=Message.Direction.INCOMING,
+        sender_role=Message.SenderRole.USER,
         message_type=message_type or "unknown",
         payload_id=payload_id or "",
         raw_payload=raw_payload,
     )
+    register_user_message(user)
 
 
 def _handle_service_selection(sender: str, user: User, payload_id: str, base_url: str) -> list[dict]:
@@ -116,19 +123,31 @@ def route_incoming_whatsapp_event(data: dict, base_url: str) -> IncomingRoutingR
     sender_name = _extract_sender_name(value)
     message_type = message.get("type", "unknown")
 
-    raw_key, _title = _extract_message_selection(message)
+    raw_key, selection_title = _extract_message_selection(message)
     selected_key = _normalize_key(raw_key)
 
     user = _get_or_create_user(sender=sender, sender_name=sender_name)
     _save_incoming_message(
         user=user,
         message_type=message_type,
-        content=raw_key,
+        content=selection_title or raw_key,
         payload_id=selected_key,
         raw_payload=message,
     )
 
+    if is_chat_handover_active(user):
+        return IncomingRoutingResult(
+            sender=sender,
+            selected_key=selected_key,
+            user=user,
+            payloads=[],
+        )
+
     node_payloads = route_with_flow_nodes(sender=sender, selected_key=selected_key, user=user, base_url=base_url)
+    normalized_key = selected_key.strip().lower()
+    if normalized_key in {"dudas", "dudas/otro", "duda", "otro"}:
+        mark_chat_needs_attention(user)
+
     if node_payloads is not None:
         return IncomingRoutingResult(
             sender=sender,
@@ -157,6 +176,7 @@ def route_incoming_whatsapp_event(data: dict, base_url: str) -> IncomingRoutingR
         base_url=base_url,
     )
     if fallback_payloads:
+        mark_chat_needs_attention(user)
         payloads = [text_message(sender, "No identifique tu respuesta, te comparto el menu principal.")]
         payloads.extend(fallback_payloads)
         return IncomingRoutingResult(

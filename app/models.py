@@ -47,9 +47,15 @@ class Message(models.Model):
         INCOMING = "incoming", "Entrante"
         OUTGOING = "outgoing", "Saliente"
 
+    class SenderRole(models.TextChoices):
+        USER = "user", "Usuario"
+        BOT = "bot", "Bot"
+        AGENT = "agent", "Agente"
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages")
     content = models.TextField(blank=True, default="")
     direction = models.CharField(max_length=20, choices=Direction.choices)
+    sender_role = models.CharField(max_length=20, choices=SenderRole.choices, default=SenderRole.USER)
     message_type = models.CharField(max_length=30, default="text")
     payload_id = models.CharField(max_length=120, blank=True, default="")
     raw_payload = models.JSONField(blank=True, null=True)
@@ -81,7 +87,7 @@ class Service(models.Model):
     available_from = models.DateField(null=True, blank=True)
     available_until = models.DateField(null=True, blank=True)
     default_duration_minutes = models.PositiveIntegerField(default=60)
-    booking_interval_minutes = models.PositiveIntegerField(default=20)
+    booking_interval_minutes = models.PositiveIntegerField(default=60)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -188,6 +194,7 @@ class Booking(models.Model):
         PENDING = "pending", "Pendiente"
         CONFIRMED = "confirmed", "Confirmado"
         CANCELLED = "cancelled", "Cancelado"
+        DOUBTS = "doubts", "Dudas"
 
     class Source(models.TextChoices):
         WHATSAPP = "whatsapp", "WhatsApp"
@@ -255,6 +262,25 @@ class BookingIntent(models.Model):
 
     def __str__(self):
         return f"{self.user.phone_number} - {self.service.name} ({self.status})"
+
+
+class ChatConversation(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pendiente"
+        RESOLVED = "resolved", "Resuelto"
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="chat_conversation")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    last_user_message_at = models.DateTimeField(null=True, blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["status", "-updated_at"]
+
+    def __str__(self):
+        return f"{self.user.phone_number} ({self.status})"
 
 
 class BotFlow(models.Model):

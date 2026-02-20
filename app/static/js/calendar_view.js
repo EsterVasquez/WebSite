@@ -15,7 +15,8 @@ async function fetchEvents() {
 
 function buildEventInfo(event) {
     const extra = event.extendedProps || {};
-    return `${event.title} | ${extra.status || ""} | ${extra.package || ""} | ${extra.phone_number || ""}`;
+    const notes = extra.notes ? ` | Nota: ${extra.notes}` : "";
+    return `${event.title} | ${extra.status || ""} | ${extra.package || ""} | ${extra.phone_number || ""}${notes}`;
 }
 
 function renderCalendar(events) {

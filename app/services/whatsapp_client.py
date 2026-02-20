@@ -44,7 +44,11 @@ def _payload_content(payload: dict) -> tuple[str, str]:
     return payload_type, "Mensaje saliente"
 
 
-def _save_outgoing(user: User | None, payload: dict) -> None:
+def _save_outgoing(
+    user: User | None,
+    payload: dict,
+    sender_role: str = Message.SenderRole.BOT,
+) -> None:
     if user is None:
         return
     message_type, content = _payload_content(payload)
@@ -52,17 +56,23 @@ def _save_outgoing(user: User | None, payload: dict) -> None:
         user=user,
         content=content,
         direction=Message.Direction.OUTGOING,
+        sender_role=sender_role,
         message_type=message_type,
         raw_payload=payload,
     )
 
 
-def send_messages(payloads: list[dict], request_id: str, user: User | None = None) -> None:
+def send_messages(
+    payloads: list[dict],
+    request_id: str,
+    user: User | None = None,
+    sender_role: str = Message.SenderRole.BOT,
+) -> None:
     payload_logger = logging.getLogger("wa_payloads")
     for index, payload in enumerate(payloads, start=1):
         log_event("OUTGOING_SEND", request_id, n=f"{index}/{len(payloads)}", summary=summarize_outgoing(payload))
         payload_logger.debug("OUTGOING_PAYLOAD | request_id=%s\n%s", request_id, safe_json(payload, max_len=20000))
-        _save_outgoing(user, payload)
+        _save_outgoing(user, payload, sender_role=sender_role)
         t0 = time.time()
         try:
             response = requests.post(URL, headers=HEADERS, json=payload, timeout=15)
@@ -79,3 +89,47 @@ def send_messages(payloads: list[dict], request_id: str, user: User | None = Non
                 )
         except requests.RequestException as exc:
             log_error("OUTGOING_EXCEPTION", request_id, err=str(exc))
+
+
+def send_text_message(
+    *,
+    to: str,
+    text: str,
+    user: User | None = None,
+    sender_role: str = Message.SenderRole.AGENT,
+) -> tuple[bool, str | None, Message | None]:
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "text",
+        "text": {"body": text},
+    }
+    try:
+        response = requests.post(URL, headers=HEADERS, json=payload, timeout=15)
+    except requests.RequestException as exc:
+        return False, str(exc), None
+
+    if response.ok:
+        if user is not None:
+            message_type, content = _payload_content(payload)
+            message = Message.objects.create(
+                user=user,
+                content=content,
+                direction=Message.Direction.OUTGOING,
+                sender_role=sender_role,
+                message_type=message_type,
+                raw_payload=payload,
+            )
+            return True, None, message
+        return True, None, None
+
+    try:
+        response_data = response.json()
+        message = (
+            ((response_data.get("error") or {}).get("message"))
+            or response.text
+            or "Error al enviar mensaje."
+        )
+    except ValueError:
+        message = response.text or "Error al enviar mensaje."
+    return False, message, None

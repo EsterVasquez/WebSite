@@ -163,3 +163,30 @@ def is_slot_available(
         package=package,
     )
     return target_time in slots
+
+
+def get_day_availability_status(
+    *,
+    service: Service,
+    target_date: date,
+    duration_minutes: int,
+    booking_interval_minutes: int | None = None,
+    package: ServicePackage | None = None,
+) -> dict:
+    if not _is_service_available_on_date(service, target_date):
+        return {"status": "out_of_range", "available_slots": 0}
+
+    ranges = _exception_ranges(service, target_date)
+    if not ranges:
+        return {"status": "no_schedule", "available_slots": 0}
+
+    slots = get_available_slots(
+        service=service,
+        target_date=target_date,
+        duration_minutes=duration_minutes,
+        booking_interval_minutes=booking_interval_minutes,
+        package=package,
+    )
+    if slots:
+        return {"status": "available", "available_slots": len(slots)}
+    return {"status": "full", "available_slots": 0}

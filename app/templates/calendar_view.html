@@ -37,10 +37,31 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Calendario de Citas</h1>
                 <p class="text-sm text-slate-500">Navega por día, semana y mes para ver el detalle de cada cita.</p>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="/" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">Volver al panel</a>
-                <a href="/citas/nueva/" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm">Nueva cita manual</a>
-                <button id="reloadCalendarBtn" class="bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm">Recargar</button>
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-2 gap-2 min-w-[260px]">
+                <a href="/" class="inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-xl text-sm font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/></svg>
+                    <span>Panel</span>
+                </a>
+                <a href="/citas/nueva/" class="inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-500 text-white px-3 py-2 rounded-xl text-sm font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14"/></svg>
+                    <span>Nueva cita</span>
+                </a>
+                <a href="/servicios-manager/" class="inline-flex items-center justify-center gap-2 bg-cyan-700 hover:bg-cyan-600 text-white px-3 py-2 rounded-xl text-sm font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h10"/></svg>
+                    <span>Servicios</span>
+                </a>
+                <a href="/bot-manager/" class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-xl text-sm font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L5 21.75V17H3a1 1 0 01-1-1V4a1 1 0 011-1h18a1 1 0 011 1v12a1 1 0 01-1 1H9.75z"/></svg>
+                    <span>Editor bot</span>
+                </a>
+                <a href="/chats/" class="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-xl text-sm font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 10h8m-8 4h5m-9 7l3.5-3H19a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h1.5L8 21z"/></svg>
+                    <span>Chats</span>
+                </a>
+                <button id="reloadCalendarBtn" class="inline-flex items-center justify-center gap-2 bg-cyan-800 hover:bg-cyan-700 text-white px-3 py-2 rounded-xl text-sm font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 4v6h6M20 20v-6h-6M20 9a8 8 0 00-13.66-4.66L4 10M4 15a8 8 0 0013.66 4.66L20 14"/></svg>
+                    <span>Actualizar</span>
+                </button>
             </div>
         </header>
 

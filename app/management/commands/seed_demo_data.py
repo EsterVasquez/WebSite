@@ -7,6 +7,7 @@ from django.utils import timezone
 from app.models import (
     Booking,
     BookingIntent,
+    ChatConversation,
     Message,
     Service,
     ServiceException,
@@ -99,6 +100,7 @@ class Command(BaseCommand):
         with transaction.atomic():
             BookingIntent.objects.all().delete()
             Booking.objects.all().delete()
+            ChatConversation.objects.all().delete()
             Message.objects.all().delete()
             User.objects.all().delete()
             ServiceException.objects.all().delete()
@@ -142,6 +144,7 @@ class Command(BaseCommand):
                 Message.objects.create(
                     user=user,
                     direction=Message.Direction.INCOMING,
+                    sender_role=Message.SenderRole.USER,
                     content="Hola",
                     message_type="text",
                 )
@@ -171,6 +174,49 @@ class Command(BaseCommand):
                     status=status,
                     source=source,
                 )
+
+            # Chats de ejemplo: algunos pendientes y otros archivados
+            ChatConversation.objects.create(
+                user=users[0],
+                status=ChatConversation.Status.PENDING,
+                last_user_message_at=timezone.now() - timedelta(hours=2),
+            )
+            Message.objects.create(
+                user=users[0],
+                direction=Message.Direction.INCOMING,
+                sender_role=Message.SenderRole.USER,
+                content="Tengo dudas sobre el paquete premium.",
+                message_type="text",
+            )
+            Message.objects.create(
+                user=users[0],
+                direction=Message.Direction.OUTGOING,
+                sender_role=Message.SenderRole.BOT,
+                content="Con gusto te ayudo, ¿qué te gustaría saber?",
+                message_type="text",
+            )
+            Booking.objects.filter(user=users[0]).update(status=Booking.Status.DOUBTS)
+
+            ChatConversation.objects.create(
+                user=users[3],
+                status=ChatConversation.Status.RESOLVED,
+                last_user_message_at=timezone.now() - timedelta(hours=26),
+                resolved_at=timezone.now() - timedelta(hours=3),
+            )
+            Message.objects.create(
+                user=users[3],
+                direction=Message.Direction.INCOMING,
+                sender_role=Message.SenderRole.USER,
+                content="Gracias por la información.",
+                message_type="text",
+            )
+            Message.objects.create(
+                user=users[3],
+                direction=Message.Direction.OUTGOING,
+                sender_role=Message.SenderRole.AGENT,
+                content="Quedamos al pendiente, excelente día.",
+                message_type="text",
+            )
 
             create_booking_intent(user=users[0], service=all_services[0], source_option_key="demo")
 

@@ -7,11 +7,19 @@ from django.views.decorators.http import require_GET
 
 from app.models import Booking, Service, ServicePackage, User
 from app.services.booking_service import (
+    get_available_days,
     confirm_booking,
     create_manual_booking,
     get_available_times,
     get_available_times_for_manual_booking,
     get_booking_context,
+)
+from app.services.chat_service import (
+    get_chat_messages,
+    list_chat_threads,
+    mark_chat_resolved,
+    reopen_chat,
+    send_agent_text_message,
 )
 from app.services.dashboard_service import (
     list_booking_events,
@@ -72,6 +80,34 @@ def available_times_api(request, token):
     return JsonResponse(data)
 
 
+@require_GET
+def dashboard_calendar_days_api(request, token):
+    year_raw = request.GET.get("year")
+    month_raw = request.GET.get("month")
+    package_id_raw = request.GET.get("package_id")
+    if not year_raw or not month_raw:
+        return JsonResponse({"error": "Debes enviar year y month."}, status=400)
+
+    try:
+        year = int(year_raw)
+        month = int(month_raw)
+    except ValueError:
+        return JsonResponse({"error": "year y month deben ser enteros válidos."}, status=400)
+
+    package_id = None
+    if package_id_raw:
+        try:
+            package_id = int(package_id_raw)
+        except ValueError:
+            return JsonResponse({"error": "package_id invalido."}, status=400)
+
+    try:
+        data = get_available_days(token=token, year=year, month=month, package_id=package_id)
+    except (ValidationError, ValueError, ServicePackage.DoesNotExist) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(data)
+
+
 @csrf_exempt
 def confirm_booking_api(request, token):
     if request.method != "POST":
@@ -117,6 +153,99 @@ def confirm_booking_api(request, token):
             },
         }
     )
+
+
+@require_GET
+def chat_threads_api(request):
+    unauthorized = _require_authenticated(request)
+    if unauthorized:
+        return unauthorized
+    return JsonResponse(list_chat_threads())
+
+
+@require_GET
+def chat_messages_api(request, user_id: int):
+    unauthorized = _require_authenticated(request)
+    if unauthorized:
+        return unauthorized
+    try:
+        user, messages = get_chat_messages(user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Chat no encontrado."}, status=404)
+    return JsonResponse(
+        {
+            "user": {
+                "id": user.id,
+                "name": user.name or "Cliente",
+                "phone_number": user.phone_number,
+            },
+            "messages": messages,
+        }
+    )
+
+
+@csrf_exempt
+def chat_send_api(request, user_id: int):
+    unauthorized = _require_authenticated(request)
+    if unauthorized:
+        return unauthorized
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido, usa POST."}, status=405)
+    try:
+        payload = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON inválido."}, status=400)
+    text = (payload.get("text") or "").strip()
+    if not text:
+        return JsonResponse({"error": "El mensaje no puede estar vacío."}, status=400)
+    try:
+        message = send_agent_text_message(user_id=user_id, text=text)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Chat no encontrado."}, status=404)
+    except ValidationError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "message": {
+                "id": message.id if message else None,
+                "content": message.content if message else text,
+                "sender_role": "agent",
+                "direction": "outgoing",
+            },
+        }
+    )
+
+
+@csrf_exempt
+def chat_resolve_api(request, user_id: int):
+    unauthorized = _require_authenticated(request)
+    if unauthorized:
+        return unauthorized
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido, usa POST."}, status=405)
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Chat no encontrado."}, status=404)
+    conversation = mark_chat_resolved(user)
+    return JsonResponse({"ok": True, "status": conversation.status})
+
+
+@csrf_exempt
+def chat_reopen_api(request, user_id: int):
+    unauthorized = _require_authenticated(request)
+    if unauthorized:
+        return unauthorized
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido, usa POST."}, status=405)
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Chat no encontrado."}, status=404)
+    conversation = reopen_chat(user)
+    return JsonResponse({"ok": True, "status": conversation.status})
 
 
 @csrf_exempt

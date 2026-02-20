@@ -79,6 +79,22 @@ def manual_booking(request):
     return render(request, "manual_booking.html", {"booking_statuses": Booking.Status.choices})
 
 
+@login_required
+def chats(request):
+    return render(request, "chats.html")
+
+
+def public_calendar_entry(request):
+    return render(
+        request,
+        "user_calendar.html",
+        {
+            "booking_error": "Esta liga requiere un token único. Abre el enlace enviado por WhatsApp para continuar.",
+            "booking_token": "",
+        },
+    )
+
+
 def user_calendar(request, token):
     try:
         context = get_booking_context(token)

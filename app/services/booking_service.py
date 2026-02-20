@@ -1,4 +1,5 @@
-from datetime import datetime
+from calendar import monthrange
+from datetime import date, datetime
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
@@ -6,7 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from app.models import Booking, BookingIntent, Service, ServicePackage, User
-from app.services.scheduling import get_available_slots, is_slot_available
+from app.services.scheduling import get_available_slots, get_day_availability_status, is_slot_available
 
 
 def _default_package(service: Service) -> ServicePackage | None:
@@ -147,6 +148,55 @@ def get_available_times(token: UUID | str, target_date: str, package_id: int | N
         "times": [slot.strftime("%H:%M") for slot in times],
         "date": date_obj.isoformat(),
         "package_id": package.id if package else None,
+    }
+
+
+def get_available_days(
+    token: UUID | str,
+    *,
+    year: int,
+    month: int,
+    package_id: int | None = None,
+) -> dict:
+    if month < 1 or month > 12:
+        raise ValidationError("El mes debe estar entre 1 y 12.")
+    if year < 2000 or year > 2100:
+        raise ValidationError("El año solicitado no es válido.")
+
+    user = get_user_by_booking_token(token)
+    intent = get_open_intent_for_user(user)
+    if not intent:
+        raise ValidationError("No existe una solicitud de reserva activa.")
+
+    package = intent.selected_package
+    if package_id is not None:
+        package = ServicePackage.objects.get(id=package_id, service=intent.service, is_active=True)
+
+    days_in_month = monthrange(year, month)[1]
+    day_statuses: dict[str, dict] = {}
+    for day in range(1, days_in_month + 1):
+        current_date = date(year, month, day)
+        try:
+            _validate_date_in_service_range(intent.service, current_date)
+            _validate_date_in_package_range(package, current_date)
+        except ValidationError:
+            day_statuses[str(day)] = {"status": "out_of_range", "available_slots": 0}
+            continue
+
+        duration = package.duration_minutes if package and package.duration_minutes else intent.service.default_duration_minutes
+        status_data = get_day_availability_status(
+            service=intent.service,
+            target_date=current_date,
+            duration_minutes=duration,
+            booking_interval_minutes=intent.service.booking_interval_minutes,
+            package=package,
+        )
+        day_statuses[str(day)] = status_data
+
+    return {
+        "year": year,
+        "month": month,
+        "days": day_statuses,
     }
 
 

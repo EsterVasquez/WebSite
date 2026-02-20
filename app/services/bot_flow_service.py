@@ -6,6 +6,7 @@ from django.db import transaction
 from app.models import BotFlow, BotFlowNode, BotFlowOption, User
 from app.services.booking_service import create_booking_intent
 from app.services.catalog_service import ensure_base_services
+from app.services.chat_service import mark_chat_needs_attention
 from app.whatsapp.constants import (
     CATEGORY_TO_SERVICES,
     DOUBTS_MESSAGE,
@@ -448,6 +449,10 @@ def route_with_flow_nodes(*, sender: str, selected_key: str, user: User, base_ur
         return [text_message(sender, "Gracias por escribirnos. Estamos para ayudarte.")]
 
     target = option.next_node or option.node.default_next
+    if target and target.key.lower() == "dudas":
+        mark_chat_needs_attention(user)
+    elif "duda" in option.title.lower():
+        mark_chat_needs_attention(user)
     return _go_to_node(sender, user, flow, target)
 
 

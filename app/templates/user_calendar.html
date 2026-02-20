@@ -8,11 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen p-4 md:p-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow p-6 md:p-10 space-y-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow p-6 md:p-10 space-y-8">
         <header class="space-y-2">
             <p class="text-xs uppercase tracking-wider text-slate-500">Jonathan CA Photography</p>
-            <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Selecciona fecha y hora</h1>
-            <p class="text-slate-500">Completa tu reserva desde esta página única.</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Agenda tu cita</h1>
+            <p class="text-slate-500">Selecciona un día disponible y confirma tu horario.</p>
         </header>
 
         {% if booking_error %}
@@ -39,13 +39,41 @@
                 </article>
             </section>
 
-            <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-3">
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <article class="lg:col-span-2 rounded-xl border p-4 bg-slate-50 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h2 class="text-lg font-semibold text-slate-800">Calendario de disponibilidad</h2>
+                        <div class="flex items-center gap-2">
+                            <button id="prevMonthBtn" type="button" class="px-3 py-1 rounded border bg-white text-sm">Anterior</button>
+                            <p id="calendarMonthLabel" class="text-sm font-semibold text-slate-700 min-w-[170px] text-center"></p>
+                            <button id="nextMonthBtn" type="button" class="px-3 py-1 rounded border bg-white text-sm">Siguiente</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-2 text-xs uppercase text-slate-500">
+                        <p class="text-center">Lun</p>
+                        <p class="text-center">Mar</p>
+                        <p class="text-center">Mié</p>
+                        <p class="text-center">Jue</p>
+                        <p class="text-center">Vie</p>
+                        <p class="text-center">Sáb</p>
+                        <p class="text-center">Dom</p>
+                    </div>
+                    <div id="daysGrid" class="grid grid-cols-7 gap-2"></div>
+
+                    <div class="flex flex-wrap gap-3 text-xs">
+                        <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-500"></span>Día disponible</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-400"></span>Día lleno</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-300"></span>Sin horarios</span>
+                    </div>
+                </article>
+
+                <article class="rounded-xl border p-4 space-y-3">
                     <label for="packageSelect" class="block text-sm font-medium text-slate-700">Paquete <span class="text-rose-600">*</span></label>
                     <select id="packageSelect" class="w-full border rounded-lg p-3" required></select>
 
-                    <label for="datePicker" class="block text-sm font-medium text-slate-700">Fecha <span class="text-rose-600">*</span></label>
-                    <input id="datePicker" type="date" class="w-full border rounded-lg p-3" required>
+                    <label for="datePicker" class="block text-sm font-medium text-slate-700">Fecha seleccionada <span class="text-rose-600">*</span></label>
+                    <input id="datePicker" type="date" class="w-full border rounded-lg p-3" required readonly>
 
                     <label for="customerName" class="block text-sm font-medium text-slate-700">Tu nombre <span class="text-rose-600">*</span></label>
                     <input id="customerName" type="text" class="w-full border rounded-lg p-3" placeholder="Nombre y apellido" required>
@@ -55,13 +83,13 @@
 
                     <label for="customerNotes" class="block text-sm font-medium text-slate-700">Notas (opcional)</label>
                     <textarea id="customerNotes" rows="3" class="w-full border rounded-lg p-3" placeholder="Indicaciones adicionales para tu cita"></textarea>
-                </div>
+                </article>
+            </section>
 
-                <div class="space-y-3">
-                    <p class="text-sm font-medium text-slate-700">Horarios disponibles</p>
-                    <div id="timeSlots" class="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto border rounded-lg p-3">
-                        <p class="text-sm text-slate-500 col-span-full">Selecciona una fecha.</p>
-                    </div>
+            <section class="grid grid-cols-1 gap-3">
+                <p class="text-sm font-medium text-slate-700">Horarios disponibles</p>
+                <div id="timeSlots" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 border rounded-lg p-3 min-h-[80px]">
+                    <p class="text-sm text-slate-500 col-span-full">Selecciona un día disponible.</p>
                 </div>
             </section>
 
@@ -74,10 +102,23 @@
         {% endif %}
     </div>
 
+    <div id="dayConfirmModal" class="hidden fixed inset-0 bg-slate-900/50 items-center justify-center p-4 z-40">
+        <div class="bg-white rounded-xl max-w-md w-full p-5 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">Confirmar selección de día</h3>
+            <p id="dayConfirmText" class="text-sm text-slate-600"></p>
+            <div class="flex justify-end gap-2">
+                <button id="cancelDayConfirmBtn" type="button" class="px-4 py-2 rounded border">Cancelar</button>
+                <button id="acceptDayConfirmBtn" type="button" class="px-4 py-2 rounded bg-emerald-600 text-white">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastSuccess" class="hidden fixed bottom-6 right-6 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg z-50"></div>
+
     <script>
         window.BOOKING_TOKEN = "{{ booking_token }}";
         window.HAS_BOOKING_ERROR = "{{ booking_error|default:'' }}" !== "";
     </script>
-    <script src="{% static 'js/user_calendar.js' %}"></script>
+    <script src="{% static 'js/user_calendar.js' %}?v=20260220-1"></script>
 </body>
 </html>

@@ -68,7 +68,7 @@ def ensure_service(internal_code: str) -> Service | None:
             "available_from": None,
             "available_until": None,
             "default_duration_minutes": 60,
-            "booking_interval_minutes": 20,
+            "booking_interval_minutes": 60,
             "is_active": True,
         },
     )

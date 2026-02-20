@@ -1,12 +1,24 @@
 from datetime import datetime, timedelta
 
 from app.models import Booking
+from app.services.chat_service import mark_chat_needs_attention, mark_chat_resolved
 
 
 def list_dashboard_bookings() -> list[dict]:
-    bookings = Booking.objects.select_related("user", "service", "package").all().order_by("date", "time")
+    bookings = (
+        Booking.objects.select_related("user", "user__chat_conversation", "service", "package")
+        .all()
+        .order_by("date", "time")
+    )
     rows: list[dict] = []
     for booking in bookings:
+        chat = getattr(booking.user, "chat_conversation", None)
+        has_pending_chat = chat is not None and chat.status == "pending"
+        status_code = booking.status
+        status_label = booking.get_status_display()
+        if has_pending_chat and booking.status != Booking.Status.CANCELLED:
+            status_code = Booking.Status.DOUBTS
+            status_label = "Dudas"
         rows.append(
             {
                 "id": booking.id,
@@ -17,11 +29,14 @@ def list_dashboard_bookings() -> list[dict]:
                 "duration_minutes": booking.duration_minutes,
                 "date": booking.date.isoformat(),
                 "time": booking.time.strftime("%H:%M"),
-                "status_code": booking.status,
-                "status": booking.get_status_display(),
+                "status_code": status_code,
+                "status": status_label,
                 "source": booking.get_source_display(),
                 "total_price": float(booking.total_price),
                 "deposit_amount": float(booking.deposit_amount),
+                "customer_notes": booking.customer_notes or "",
+                "chat_pending": has_pending_chat,
+                "chat_user_id": booking.user_id if has_pending_chat else None,
             }
         )
     return rows
@@ -34,6 +49,12 @@ def update_booking_status(*, booking_id: int, status_code: str) -> Booking:
         raise ValueError("Estado de reservación inválido.")
     booking.status = status_code
     booking.save(update_fields=["status", "updated_at"])
+    if status_code == Booking.Status.DOUBTS:
+        mark_chat_needs_attention(booking.user)
+    elif status_code in {Booking.Status.CONFIRMED, Booking.Status.CANCELLED}:
+        conversation = getattr(booking.user, "chat_conversation", None)
+        if conversation and conversation.status == "pending":
+            mark_chat_resolved(booking.user)
     return booking
 
 
@@ -65,6 +86,7 @@ def list_booking_events() -> list[dict]:
                     "package": booking.package.name if booking.package else "Sin paquete",
                     "source": booking.get_source_display(),
                     "service": booking.service.name,
+                    "notes": booking.customer_notes or "",
                 },
             }
         )

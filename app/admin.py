@@ -6,6 +6,7 @@ from app.models import (
     BotFlow,
     BotFlowNode,
     BotFlowOption,
+    ChatConversation,
     Message,
     Service,
     ServiceException,
@@ -24,9 +25,9 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ("user", "direction", "message_type", "payload_id", "created_at")
+    list_display = ("user", "direction", "sender_role", "message_type", "payload_id", "created_at")
     search_fields = ("user__phone_number", "content", "payload_id")
-    list_filter = ("direction", "message_type")
+    list_filter = ("direction", "sender_role", "message_type")
 
 
 class ServiceWeeklyRangeInline(admin.TabularInline):
@@ -57,6 +58,13 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = ("service", "package", "customer_name", "customer_phone", "date", "time", "status", "source")
     search_fields = ("customer_name", "customer_phone", "service__name", "user__phone_number")
     list_filter = ("status", "source", "date")
+
+
+@admin.register(ChatConversation)
+class ChatConversationAdmin(admin.ModelAdmin):
+    list_display = ("user", "status", "last_user_message_at", "resolved_at", "updated_at")
+    list_filter = ("status",)
+    search_fields = ("user__phone_number", "user__name")
 
 
 @admin.register(BookingIntent)

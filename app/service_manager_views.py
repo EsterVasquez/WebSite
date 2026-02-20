@@ -130,7 +130,7 @@ def create_service(request):
         available_from=available_from,
         available_until=available_until,
         default_duration_minutes=_parse_int(request.POST.get("default_duration_minutes"), 60),
-        booking_interval_minutes=_parse_int(request.POST.get("booking_interval_minutes"), 20),
+        booking_interval_minutes=_parse_int(request.POST.get("booking_interval_minutes"), 60),
         is_active=_is_checked(request.POST.get("is_active")),
     )
     messages.success(request, f"Servicio '{service.name}' creado.")
@@ -161,7 +161,7 @@ def update_service(request, service_id: int):
     service.available_from = available_from
     service.available_until = available_until
     service.default_duration_minutes = _parse_int(request.POST.get("default_duration_minutes"), 60)
-    service.booking_interval_minutes = _parse_int(request.POST.get("booking_interval_minutes"), 20)
+    service.booking_interval_minutes = _parse_int(request.POST.get("booking_interval_minutes"), 60)
     service.is_active = _is_checked(request.POST.get("is_active"))
     service.save()
     messages.success(request, "Servicio actualizado.")
