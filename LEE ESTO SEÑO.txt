@@ -1,0 +1,37 @@
+pasos para levantar el proyecto:
+
+1.- instalar las librerias necesarias:
+python -m pip install -r requirements.txt
+
+2.- Borrar la base de datos
+Te metes a pgadmin y le das drop
+
+3.- Crear la base de datos de nuevo
+nombre de la base de datos: Calendrix
+CALENDRIX CON C MAYUSCULA OJO 👁️
+
+4.- hacer las migraciones
+python manage.py makemigrations
+python manage.py migrate
+
+5.- Crear un superusuario para acceder al admin
+python manage.py createsuperuser
+
+pon admin en todo jaja
+usuario: admin
+correo: admin@admin.com
+contraseña: admin
+te va a decir que es muy inseguro pero dale igual
+
+6.- Datos de prueba
+python manage.py seed_demo_data
+
+con esto se crean pues datos de prueba para que puedas ver como funciona el proyecto
+
+7.- Levantar el servidor
+python manage.py runserver
+
+8.- login
+es admin y admin obvio, lo pusiste en el paso 5 jaja
+
+y ya, seria todo, cualquier duda me avisas jaja
